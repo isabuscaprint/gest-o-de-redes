@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acompanhamento de Gestão de Redes</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyByPDdkms28d0OLZVMBLd8G-sRyc7dC7p0",authDomain:"buscaprint-d6b32.firebaseapp.com",projectId:"buscaprint-d6b32",storageBucket:"buscaprint-d6b32.firebasestorage.app",messagingSenderId:"914269872356",appId:"1:914269872356:web:db28f11ad9b54765448cf1"};
+firebase.initializeApp(firebaseConfig);
+const _db=firebase.firestore();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4ff;--white:#fff;--surface:#f7f9ff;--border:#e2e8f8;--border2:#c8d4f0;
+  --text:#1a1f3a;--muted:#7a86a8;--accent:#5b6ef5;--al:#eef0ff;
+  --green:#1a9e6a;--green-bg:#e8f8f2;--blue:#1e5fa8;--blue-bg:#eaf0fb;
+  --yellow:#b8860b;--yellow-bg:#fef9e7;--orange:#c45c1a;--orange-bg:#fef3ea;
+  --red:#c0392b;--red-bg:#fdecea;--purple:#7c3aed;--purple-bg:#f5f0ff;
+  --pink:#db2777;--pink-bg:#fdf2f8;
+  --shadow:0 2px 12px rgba(91,110,245,.08);--shadow-lg:0 8px 32px rgba(91,110,245,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;height:58px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:var(--shadow);}
+.logo-mark{background:linear-gradient(135deg,#5b6ef5,#a855f7);color:white;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.header-title{font-size:15px;font-weight:700;}
+.header-sub{font-size:11px;color:var(--muted);}
+.header-actions{margin-left:auto;display:flex;gap:7px;align-items:center;}
+.btn{padding:7px 14px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{background:#4a5ce0;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg);color:var(--text);}
+.btn-green{background:var(--green);color:white;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* NAV */
+nav{width:222px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);padding:12px 0;display:flex;flex-direction:column;overflow-y:auto;}
+.nav-section{margin-bottom:2px;}
+.nav-label{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:8px 18px 3px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:var(--al);color:var(--accent);font-weight:600;}
+.nav-item .icon{font-size:14px;}
+.nav-badge{margin-left:auto;color:white;font-size:9px;font-weight:800;border-radius:20px;padding:1px 6px;min-width:17px;text-align:center;background:var(--red);}
+.nav-badge.purple{background:var(--purple);}
+.nav-badge.green{background:var(--green);}
+
+/* MAIN */
+main{flex:1;overflow-y:auto;padding:22px;}
+
+/* CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stats-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:13px;padding:16px 18px;}
+.stat-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.stat-value{font-size:24px;font-weight:800;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.stat-delta{font-size:11px;font-weight:700;margin-top:3px;}
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* CARD BOX */
+.card{background:var(--white);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:18px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.card-title{font-size:13px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--muted);margin-left:auto;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--border);}
+td{padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.td-actions{display:flex;gap:5px;}
+.icon-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer;transition:all .12s;}
+.icon-btn:hover{background:var(--bg);}
+
+/* VIEWS */
+.view{display:none;}.view.active{display:block;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--white);border-radius:16px;width:560px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp .22s ease;}
+.modal-lg{width:680px;}
+.modal-xl{width:860px;}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+.modal-body{padding:18px 22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:11px;font-weight:600;color:var(--muted);}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 11px;font-family:inherit;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:var(--white);}
+.form-group textarea{resize:vertical;min-height:65px;}
+.form-section{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 3px;padding-bottom:5px;border-bottom:1px solid var(--border);grid-column:1/-1;}
+
+/* BADGE */
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow);}
+.badge-purple{background:var(--purple-bg);color:var(--purple);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);}
+.badge-pink{background:var(--pink-bg);color:var(--pink);}
+.badge-orange{background:var(--orange-bg);color:var(--orange);}
+
+/* ALERT */
+.alert{border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;}
+.alert-info{background:var(--blue-bg);color:var(--blue);}
+.alert-warn{background:var(--yellow-bg);color:var(--yellow);}
+.alert-green{background:var(--green-bg);color:var(--green);}
+.alert-purple{background:var(--purple-bg);color:var(--purple);}
+
+/* POST CARD */
+.post-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:box-shadow .15s;}
+.post-card:hover{box-shadow:var(--shadow);}
+.post-score{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:13px;font-weight:800;flex-shrink:0;}
+.score-great{background:var(--green-bg);color:var(--green);}
+.score-good{background:var(--blue-bg);color:var(--blue);}
+.score-avg{background:var(--yellow-bg);color:var(--yellow);}
+.score-low{background:var(--red-bg);color:var(--red);}
+
+/* META GAUGE */
+.meta-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:6px;}
+.meta-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;}
+.cal-day{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;min-height:80px;font-size:11px;}
+.cal-day.today{border-color:var(--accent);background:var(--al);}
+.cal-day.has-post{border-color:var(--green);background:var(--green-bg);}
+.cal-date{font-weight:700;font-size:12px;margin-bottom:4px;}
+.cal-post-tag{background:var(--accent);color:white;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700;margin-bottom:3px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* PROFILE TABS */
+.profile-bar{background:var(--white);border-bottom:2px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:4px;overflow-x:auto;flex-shrink:0;height:44px;}
+.profile-tab{padding:6px 14px;border-radius:7px 7px 0 0;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;white-space:nowrap;transition:all .12s;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.profile-tab:hover{color:var(--text);background:var(--bg);}
+.profile-tab.active{color:var(--accent);border-bottom:2px solid var(--accent);background:var(--al);}
+.profile-name-badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--accent);background:var(--al);border-radius:20px;padding:3px 12px;margin-left:8px;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-icon{font-size:42px;margin-bottom:10px;}
+.empty-text{font-size:13px;}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.loading-spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">📱</div>
+  <div>
+    <div class="header-title">Acompanhamento de Gestão de Redes</div>
+    <div class="header-sub" id="headerSub">Posts · Métricas · Metas · Concorrentes · Relatórios</div>
+  </div>
+  <div class="header-actions">
+    <span id="syncStatus" style="font-size:11px;color:var(--muted)">🔄 Conectando...</span>
+    <button class="btn btn-ghost btn-sm" onclick="openModal('modalPost')">📸 Registrar post</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportarParaClaude()" style="border-color:var(--purple);color:var(--purple)">🤖 Exportar para Claude</button>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modalMeta')">🎯 Definir meta</button>
+  </div>
+</header>
+
+<!-- BARRA DE PERFIS -->
+<div class="profile-bar" id="profileBar"></div>
+
+<div class="layout">
+<nav>
+  <div class="nav-section">
+    <div class="nav-label">Visão Geral</div>
+    <div class="nav-item active" onclick="showView('dashboard',this)"><span class="icon">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="showView('metas',this)"><span class="icon">🎯</span> Metas <span class="nav-badge green" id="badge-metas">0</span></div>
+    <div class="nav-item" onclick="showView('relatorios',this)"><span class="icon">📋</span> Relatórios</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Conteúdo</div>
+    <div class="nav-item" onclick="showView('posts',this)"><span class="icon">📸</span> Posts & Métricas</div>
+    <div class="nav-item" onclick="showView('analise',this)"><span class="icon">🔬</span> Análise de Post</div>
+    <div class="nav-item" onclick="showView('calendario',this)"><span class="icon">📅</span> Calendário</div>
+    <div class="nav-item" onclick="showView('acompanhamento',this)"><span class="icon">👁</span> Acompanhamento</div>
+    <div class="nav-item" onclick="showView('concorrentes',this)"><span class="icon">🔭</span> Concorrentes</div>
+  </div>
+</nav>
+
+<main id="mainContent">
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="stats-row" id="dashStats"></div>
+  <div class="row-2">
+    <div class="card">
+      <div class="card-header"><span>🎯</span><span class="card-title">Metas do Mês</span></div>
+      <div id="dashMetas" style="padding:14px"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>🏆</span><span class="card-title">Top Posts</span></div>
+      <div id="dashTopPosts" style="padding:0"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span>📈</span><span class="card-title">Engajamento — Últimos 10 posts</span></div>
+    <div style="padding:16px"><canvas id="chartEng" height="90"></canvas></div>
+  </div>
+  <div class="row-2">
+    <div class="card">
+      <div class="card-header"><span>⚠️</span><span class="card-title">Alertas & Diagnósticos</span></div>
+      <div id="dashAlertas" style="padding:14px"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>💡</span><span class="card-title">Padrões Identificados</span></div>
+      <div id="dashPadroes" style="padding:14px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- METAS -->
+<div class="view" id="view-metas">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:800">Metas</div><div style="font-size:12px;color:var(--muted)">Acompanhamento automático com diagnóstico e soluções</div></div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modalMeta')">+ Nova meta</button>
+  </div>
+  <div id="metasContent"></div>
+</div>
+
+<!-- POSTS & MÉTRICAS -->
+<div class="view" id="view-posts">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:800">Posts & Métricas</div><div style="font-size:12px;color:var(--muted)">Registro e análise de performance de cada post</div></div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modalPost')">+ Registrar post</button>
+  </div>
+  <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
+    <select id="postFilter" style="padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:var(--white);outline:none;" onchange="renderPosts()">
+      <option value="">Todos os formatos</option>
+      <option>Reels</option><option>Carrossel</option><option>Foto</option><option>Stories</option>
+    </select>
+    <select id="postSort" style="padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:var(--white);outline:none;" onchange="renderPosts()">
+      <option value="data">Mais recentes</option>
+      <option value="eng">Maior engajamento</option>
+      <option value="alcance">Maior alcance</option>
+      <option value="salv">Mais salvamentos</option>
+    </select>
+  </div>
+  <div id="postsContent"></div>
+</div>
+
+<!-- ANÁLISE DE POST -->
+<div class="view" id="view-analise">
+  <div style="margin-bottom:18px"><div style="font-size:18px;font-weight:800">Análise de Post</div><div style="font-size:12px;color:var(--muted)">Cole o link do post + métricas para diagnóstico completo</div></div>
+  <div class="card">
+    <div class="card-header"><span>🔗</span><span class="card-title">Dados do Post</span></div>
+    <div style="padding:18px">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Link do post (opcional)</label>
+          <input id="an-link" placeholder="https://www.instagram.com/p/..." style="font-family:'JetBrains Mono',monospace;font-size:11px">
+        </div>
+        <div class="form-group form-full"><label>Tema / Assunto do post</label><input id="an-tema" placeholder="Ex: Dica rápida, conteúdo educativo, bastidores..."></div>
+        <div class="form-group"><label>Formato</label>
+          <select id="an-formato"><option>Reels</option><option>Carrossel</option><option>Foto</option><option>Stories</option></select>
+        </div>
+        <div class="form-group"><label>Data de publicação</label><input id="an-data" type="date"></div>
+        <div class="form-section">Métricas de Alcance</div>
+        <div class="form-group"><label>Visualizações / Views</label><input id="an-views" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Alcance (pessoas únicas)</label><input id="an-alcance" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Impressões</label><input id="an-imp" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Retenção % (vídeos)</label><input id="an-ret" type="number" placeholder="0"></div>
+        <div class="form-section">Métricas de Engajamento</div>
+        <div class="form-group"><label>Curtidas</label><input id="an-curtidas" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Comentários</label><input id="an-coment" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Compartilhamentos</label><input id="an-comp" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Salvamentos</label><input id="an-salv" type="number" placeholder="0"></div>
+        <div class="form-section">Métricas de Conversão</div>
+        <div class="form-group"><label>Cliques no link</label><input id="an-cliques" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Respostas no Direct</label><input id="an-direct" type="number" placeholder="0"></div>
+        <div class="form-group form-full"><label>Observações sobre o post (gancho usado, contexto...)</label><textarea id="an-obs" placeholder="Descreva o gancho que usou, o que o post prometia, como foi a execução..."></textarea></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="analisarPost()">🔬 Analisar com IA</button>
+        <button class="btn btn-ghost" onclick="salvarAnalise()">💾 Salvar post</button>
+      </div>
+    </div>
+  </div>
+  <div id="analiseResult"></div>
+</div>
+
+<!-- CALENDÁRIO -->
+<div class="view" id="view-calendario">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:800">Calendário Editorial</div><div style="font-size:12px;color:var(--muted)">Planejamento visual de conteúdo</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="mesAnterior()">←</button>
+      <span id="calMesLabel" style="font-weight:700;font-size:13px"></span>
+      <button class="btn btn-ghost btn-sm" onclick="mesProximo()">→</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalCalPost')">+ Planejar post</button>
+    </div>
+  </div>
+  <div class="cal-grid" id="calHeader" style="margin-bottom:4px"></div>
+  <div class="cal-grid" id="calBody"></div>
+</div>
+
+<!-- ACOMPANHAMENTO -->
+<div class="view" id="view-acompanhamento">
+  <div style="margin-bottom:18px"><div style="font-size:18px;font-weight:800">Acompanhamento de Posts</div><div style="font-size:12px;color:var(--muted)">Evolução de performance ao longo do tempo</div></div>
+  <div id="acompContent"></div>
+</div>
+
+<!-- CONCORRENTES -->
+<div class="view" id="view-concorrentes">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:800">Acompanhamento de Concorrentes</div><div style="font-size:12px;color:var(--muted)">Monitore, compare e identifique oportunidades</div></div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modalConcorrente')">+ Adicionar concorrente</button>
+  </div>
+  <div id="concorrentesContent"></div>
+</div>
+
+<!-- RELATÓRIOS -->
+<div class="view" id="view-relatorios">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div><div style="font-size:18px;font-weight:800">Relatórios</div><div style="font-size:12px;color:var(--muted)">Automático dos posts + Histórico manual de períodos anteriores</div></div>
+  </div>
+
+  <!-- Abas internas -->
+  <div style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+    <button class="btn" id="relTab1" onclick="setRelTab('auto')" style="flex:1;border-radius:0;background:var(--accent);color:white;border:none;padding:10px;font-size:12px">📊 Relatório Automático</button>
+    <button class="btn" id="relTab2" onclick="setRelTab('manual')" style="flex:1;border-radius:0;background:var(--white);color:var(--muted);border:none;padding:10px;font-size:12px;border-left:1px solid var(--border)">📁 Histórico Manual</button>
+  </div>
+
+  <!-- ABA AUTO -->
+  <div id="relAbaAuto">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <select id="relPeriodo" style="padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:var(--white);outline:none;" onchange="renderRelatorio()">
+        <option value="mensal">Relatório Mensal</option>
+        <option value="anual">Relatório Anual</option>
+      </select>
+      <select id="relMes" style="padding:7px 12px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:var(--white);outline:none;" onchange="renderRelatorio()"></select>
+      <button class="btn btn-green btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
+    </div>
+    <div id="relContent"></div>
+  </div>
+
+  <!-- ABA MANUAL -->
+  <div id="relAbaManual" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:var(--muted)">Cadastre relatórios de períodos anteriores ou suba arquivos Excel/CSV para manter o histórico completo.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--white);transition:all .15s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='var(--white)'">
+          📤 Subir arquivo
+          <input type="file" id="uploadRelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="lerArquivoRelatorio(this)">
+        </label>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modalRelManual')">+ Cadastrar período</button>
+        <button class="btn btn-green btn-sm" onclick="exportarHistoricoManual()">📥 Exportar Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportarHistoricoParaClaude()" style="border-color:var(--purple);color:var(--purple)">🤖 Exportar p/ Claude</button>
+      </div>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:16px">
+      💡 <strong>Como usar:</strong> Clique em <strong>"📤 Subir arquivo"</strong> para carregar um Excel ou CSV — o sistema tenta preencher as métricas automaticamente. Depois confira os dados e salve. Ou clique em <strong>"+ Cadastrar período"</strong> para preencher manualmente.
+    </div>
+    <div id="relManualContent"></div>
+  </div>
+</div>
+
+<!-- ESTRATEGISTA IA -->
+
+</main>
+</div>
+
+<!-- MODAL RELATÓRIO MANUAL -->
+<div class="modal-backdrop" id="modalRelManual">
+  <div class="modal">
+    <div class="modal-header"><span style="font-size:18px">📁</span><div class="modal-title" id="relManualTitle">Cadastrar Período</div><button class="modal-close" onclick="closeModal('modalRelManual')">×</button></div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:14px">Use para lançar dados de meses/anos anteriores ou qualquer período sem posts registrados aqui.</div>
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Período de referência (mês/ano) *</label><input id="rm-periodo" type="month"></div>
+        <div class="form-group form-full"><label>Descrição do período</label><input id="rm-desc" placeholder="Ex: Março 2024 — antes de usar este sistema"></div>
+        <div class="form-section">Métricas do Período</div>
+        <div class="form-group"><label>Total de posts publicados</label><input id="rm-posts" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Engajamento médio (%)</label><input id="rm-eng" type="number" step="0.1" placeholder="Ex: 3.5"></div>
+        <div class="form-group"><label>Alcance médio por post</label><input id="rm-alcance" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de salvamentos</label><input id="rm-salv" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de compartilhamentos</label><input id="rm-comp" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de views</label><input id="rm-views" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de curtidas</label><input id="rm-curtidas" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de comentários</label><input id="rm-coment" type="number" placeholder="0"></div>
+        <div class="form-group"><label>DMs / Directs</label><input id="rm-direct" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Novos seguidores no período</label><input id="rm-seg" type="number" placeholder="0"></div>
+        <div class="form-group form-full"><label>Melhor post do período</label><input id="rm-bestpost" placeholder="Ex: 'Dica de exercício para coluna' — Reel com 12k views"></div>
+        <div class="form-group form-full"><label>Arquivo anexado (nome)</label><input id="rm-arquivo" placeholder="Ex: relatorio-marco-2024.xlsx — descreva o arquivo se subiu"></div>
+        <div class="form-group form-full"><label>Observações / Contexto</label><textarea id="rm-obs" placeholder="O que aconteceu neste período? Campanhas, eventos, mudanças de estratégia..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalRelManual')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvRelManual" onclick="salvarRelManual()">Salvar período</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORTAR PARA CLAUDE -->
+<div class="modal-backdrop" id="modalClaude">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span style="font-size:18px">🤖</span>
+      <div class="modal-title">Exportar Resumo para o Claude</div>
+      <button class="modal-close" onclick="closeModal('modalClaude')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--purple-bg);border-radius:9px;padding:12px 14px;font-size:12px;color:var(--purple);margin-bottom:14px">
+        💡 <strong>Como usar:</strong> Copie o texto abaixo → Abra o Claude (claude.ai) → Cole e envie. O Claude vai analisar seus dados e te dizer exatamente o que fazer para atingir suas metas.
+      </div>
+      <div style="position:relative">
+        <textarea id="claudeExportText" readonly style="width:100%;height:320px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text);resize:none;outline:none;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalClaude')">Fechar</button>
+      <button class="btn btn-primary" onclick="copiarParaClaude()" id="btnCopiar">📋 Copiar tudo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR POST -->
+<div class="modal-backdrop" id="modalPost">
+  <div class="modal modal-lg">
+    <div class="modal-header"><span style="font-size:18px">📸</span><div class="modal-title">Registrar Post</div><button class="modal-close" onclick="closeModal('modalPost')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Tema / Assunto *</label><input id="p-tema" placeholder="Ex: Dica do dia, lançamento, tendência..."></div>
+        <div class="form-group form-full"><label>Link do post (opcional)</label><input id="p-link" placeholder="https://www.instagram.com/p/..." style="font-family:'JetBrains Mono',monospace;font-size:11px"></div>
+        <div class="form-group"><label>Formato *</label>
+          <select id="p-formato"><option>Reels</option><option>Carrossel</option><option>Foto</option><option>Stories</option></select>
+        </div>
+        <div class="form-group"><label>Data de publicação *</label><input id="p-data" type="date"></div>
+        <div class="form-group"><label>Pilar de conteúdo</label>
+          <select id="p-pilar">
+            <option>Educativo</option><option>Autoridade</option><option>Desejo/Transformação</option>
+            <option>Prova Social</option><option>Conexão/Bastidores</option><option>Venda direta</option><option>Quebra de objeção</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Gancho usado</label><input id="p-gancho" placeholder="Ex: 'Você está dormindo errado e nem sabe'"></div>
+        <div class="form-section">Métricas</div>
+        <div class="form-group"><label>Views / Visualizações</label><input id="p-views" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Alcance</label><input id="p-alcance" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Curtidas</label><input id="p-curtidas" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Comentários</label><input id="p-coment" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Compartilhamentos</label><input id="p-comp" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Salvamentos</label><input id="p-salv" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Cliques no link</label><input id="p-cliques" type="number" placeholder="0"></div>
+        <div class="form-group"><label>DMs / Directs</label><input id="p-direct" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Retenção % (vídeos)</label><input id="p-ret" type="number" placeholder="0"></div>
+        <div class="form-group form-full"><label>Observações</label><textarea id="p-obs" placeholder="Contexto do post, o que funcionou, o que não funcionou..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalPost')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPost()">Salvar post</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL META -->
+<div class="modal-backdrop" id="modalMeta">
+  <div class="modal">
+    <div class="modal-header"><span style="font-size:18px">🎯</span><div class="modal-title">Nova Meta</div><button class="modal-close" onclick="closeModal('modalMeta')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Nome da meta *</label><input id="m-nome" placeholder="Ex: Atingir 500 seguidores este mês"></div>
+        <div class="form-group"><label>Indicador *</label>
+          <select id="m-tipo">
+            <option value="seguidores">Seguidores</option>
+            <option value="alcance">Alcance médio por post</option>
+            <option value="engajamento">Taxa de engajamento %</option>
+            <option value="salvamentos">Salvamentos por post</option>
+            <option value="compartilhamentos">Compartilhamentos por post</option>
+            <option value="directs">DMs / Directs</option>
+            <option value="cliques">Cliques no link</option>
+            <option value="posts">Posts publicados</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Valor meta *</label><input id="m-valor" type="number" placeholder="Ex: 500"></div>
+        <div class="form-group"><label>Valor atual</label><input id="m-atual" type="number" placeholder="Ex: 320"></div>
+        <div class="form-group"><label>Prazo</label><input id="m-prazo" type="month" ></div>
+        <div class="form-group"><label>Prioridade</label>
+          <select id="m-prior"><option value="alta">🔴 Alta</option><option value="media">🟡 Média</option><option value="baixa">🟢 Baixa</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalMeta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMeta()">Salvar meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONCORRENTE -->
+<div class="modal-backdrop" id="modalConcorrente">
+  <div class="modal modal-lg">
+    <div class="modal-header"><span style="font-size:18px">🔭</span><div class="modal-title" id="concModalTitle">Adicionar Concorrente</div><button class="modal-close" onclick="closeModal('modalConcorrente')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">Identificação</div>
+        <div class="form-group form-full"><label>Nome / Apelido *</label><input id="conc-nome" placeholder="Ex: Studio Forma, @concorrente1"></div>
+        <div class="form-group"><label>@ Instagram</label><input id="conc-arroba" placeholder="@usuario"></div>
+        <div class="form-group"><label>Link do perfil</label><input id="conc-link" placeholder="https://instagram.com/..." style="font-size:11px;font-family:monospace"></div>
+        <div class="form-group"><label>Nicho / Segmento</label><input id="conc-nicho" placeholder="Ex: Pilates, Moda feminina, Nutrição..."></div>
+        <div class="form-group"><label>Nível de ameaça</label>
+          <select id="conc-nivel"><option value="alto">🔴 Alto — concorre diretamente</option><option value="medio">🟡 Médio — concorre indiretamente</option><option value="baixo">🟢 Baixo — referência a observar</option></select>
+        </div>
+        <div class="form-section">Métricas do Perfil</div>
+        <div class="form-group"><label>Seguidores</label><input id="conc-seg" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Seguindo</label><input id="conc-seg2" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Total de posts</label><input id="conc-posts" type="number" placeholder="0"></div>
+        <div class="form-group"><label>Frequência de postagem</label>
+          <select id="conc-freq"><option>Diária</option><option>3-5x por semana</option><option>1-2x por semana</option><option>Irregular</option></select>
+        </div>
+        <div class="form-group"><label>Eng. médio estimado %</label><input id="conc-eng" type="number" step="0.1" placeholder="Ex: 3.5"></div>
+        <div class="form-group"><label>Formato mais usado</label>
+          <select id="conc-formato"><option>Reels</option><option>Carrossel</option><option>Foto</option><option>Misto</option></select>
+        </div>
+        <div class="form-section">Análise de Conteúdo</div>
+        <div class="form-group form-full"><label>Temas/assuntos mais postados</label><input id="conc-temas" placeholder="Ex: dicas de exercício, bastidores, depoimentos, ofertas..."></div>
+        <div class="form-group form-full"><label>Tom de comunicação</label>
+          <select id="conc-tom"><option>Educativo e técnico</option><option>Descontraído e próximo</option><option>Inspiracional</option><option>Vendedor e direto</option><option>Misto</option></select>
+        </div>
+        <div class="form-group form-full"><label>Pontos fortes (o que ele faz bem)</label><textarea id="conc-fortes" placeholder="Ex: Reels com alta retenção, depoimentos constantes, stories diários..."></textarea></div>
+        <div class="form-group form-full"><label>Pontos fracos (onde ele falha)</label><textarea id="conc-fracos" placeholder="Ex: Não responde comentários, feed inconsistente, sem CTA, conteúdo muito genérico..."></textarea></div>
+        <div class="form-group form-full"><label>Oportunidades identificadas</label><textarea id="conc-opor" placeholder="Ex: Não explora vídeos curtos, público sem resposta, nicho específico que ele ignora..."></textarea></div>
+        <div class="form-group form-full"><label>Data da análise</label><input id="conc-data" type="date"></div>
+        <div class="form-group form-full"><label>Observações gerais</label><textarea id="conc-obs" placeholder="Qualquer outra observação relevante..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalConcorrente')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvConc" onclick="salvarConcorrente()">Salvar concorrente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CALENDÁRIO POST -->
+<div class="modal-backdrop" id="modalCalPost">
+  <div class="modal">
+    <div class="modal-header"><span style="font-size:18px">📅</span><div class="modal-title">Planejar Post</div><button class="modal-close" onclick="closeModal('modalCalPost')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full"><label>Tema / Assunto *</label><input id="cal-tema" placeholder="Ex: Dica rápida de alongamento para home office"></div>
+        <div class="form-group"><label>Data *</label><input id="cal-data" type="date"></div>
+        <div class="form-group"><label>Formato</label>
+          <select id="cal-formato"><option>Reels</option><option>Carrossel</option><option>Foto</option><option>Stories</option></select>
+        </div>
+        <div class="form-group"><label>Pilar</label>
+          <select id="cal-pilar"><option>Educativo</option><option>Autoridade</option><option>Desejo/Transformação</option><option>Prova Social</option><option>Conexão</option><option>Venda direta</option></select>
+        </div>
+        <div class="form-group form-full"><label>Gancho / Ideia</label><input id="cal-gancho" placeholder="Ex: 'O erro que 90% das pessoas cometem ao sentar'"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="cal-status"><option value="planejado">📋 Planejado</option><option value="gravado">🎬 Gravado</option><option value="editado">✂️ Editado</option><option value="publicado">✅ Publicado</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalCalPost')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCalPost()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ STATE ══
+// ══ PERFIS ══
+const PERFIS = [
+  {id:'buscaprint',     nome:'BuscaPrint',              emoji:'🖨️'},
+  {id:'buscaprint2',    nome:'BuscaPrint Personalizados',emoji:'🎨'},
+  {id:'modaLucia',      nome:'Moda Lucia Castro',        emoji:'👗'},
+  {id:'splashPlus',     nome:'Splash Plus Size',         emoji:'✨'},
+  {id:'emForma',        nome:'Em Forma',                 emoji:'💪'},
+  {id:'nsTurismo',      nome:'NSTurismo',                emoji:'✈️'},
+];
+let currentPerfil = localStorage.getItem('ig_current_perfil')||'buscaprint';
+
+function pkPerfil(key){ return 'ig_'+currentPerfil+'_'+key; }
+async function trocarPerfil(id){
+  currentPerfil=id;
+  localStorage.setItem('ig_current_perfil',id);
+
+  // Carrega cache local imediatamente — tela não trava
+  posts       =JSON.parse(localStorage.getItem('ig_'+id+'_posts')||'[]');
+  metas       =JSON.parse(localStorage.getItem('ig_'+id+'_metas')||'[]');
+  calPosts    =JSON.parse(localStorage.getItem('ig_'+id+'_cal')||'[]');
+  concorrentes=JSON.parse(localStorage.getItem('ig_'+id+'_conc')||'[]');
+  relManuais  =JSON.parse(localStorage.getItem('ig_relmanuais_'+id)||'[]');
+
+  const p=PERFIS.find(x=>x.id===id);
+  document.getElementById('headerSub').innerHTML=`${p.emoji} <strong>${p.nome}</strong> · Posts · Métricas · Metas · Concorrentes`;
+  renderProfileBar();
+  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');});
+  document.getElementById('view-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item').classList.add('active');
+  chartEngInst=null;
+  renderDashboard();updateBadges();popularRelMes();
+
+  // Sincroniza Firebase em segundo plano
+  setSyncStatus('loading');
+  try{
+    const [pp,m,c,conc]=await Promise.all([
+      sbGet('ig_posts'),sbGet('ig_metas'),sbGet('ig_cal'),sbGet('ig_conc')
+    ]);
+    posts=pp;metas=m;calPosts=c;concorrentes=conc;
+    localStorage.setItem('ig_'+id+'_posts',JSON.stringify(posts));
+    localStorage.setItem('ig_'+id+'_metas',JSON.stringify(metas));
+    localStorage.setItem('ig_'+id+'_cal',JSON.stringify(calPosts));
+    localStorage.setItem('ig_'+id+'_conc',JSON.stringify(concorrentes));
+    setSyncStatus('ok');
+    renderDashboard();updateBadges();popularRelMes();
+  }catch(e){setSyncStatus('err','usando dados locais');}
+}
+function renderProfileBar(){
+  document.getElementById('profileBar').innerHTML=PERFIS.map(p=>`
+    <button class="profile-tab ${p.id===currentPerfil?'active':''}" onclick="trocarPerfil('${p.id}')">
+      ${p.emoji} ${p.nome}
+    </button>`).join('');
+}
+
+let posts        = [];
+let metas        = [];
+let calPosts     = [];
+let concorrentes = [];
+let currentConcId = null;
+
+// ══ SUPABASE ══
+const currentPerfilKey=()=>currentPerfil;
+
+async function sbGet(table){
+  try{
+    const snap=await _db.collection(table).where('perfil','==',currentPerfil).get();
+    const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Ordena localmente por criado_em desc
+    return docs.sort((a,b)=>new Date(b.criado_em||0)-new Date(a.criado_em||0));
+  }catch(e){
+    console.error('fbGet',table,e);
+    return JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_'+table)||'[]');
+  }
+}
+async function sbInsert(table,obj){
+  try{
+    const newObj={...obj,perfil:currentPerfil,criado_em:new Date().toISOString(),id:obj.id||crypto.randomUUID()};
+    await _db.collection(table).doc(newObj.id).set(newObj);
+    return newObj;
+  }catch(e){console.error('fbInsert',table,e);return null;}
+}
+async function sbUpdate(table,id,obj){
+  try{await _db.collection(table).doc(id).update(obj);}catch(e){console.error('fbUpdate',table,id,e);}
+}
+async function sbDelete(table,id){
+  try{await _db.collection(table).doc(id).delete();}catch(e){console.error('fbDelete',table,id,e);}
+}
+function setSyncStatus(status, detalhe){
+  const el=document.getElementById('syncStatus');
+  if(!el)return;
+  const map={ok:'🟢 Sincronizado',loading:'🔄 Conectando...',err:'🔴 Offline (salvando local)'};
+  el.textContent=(map[status]||status)+(detalhe?' — '+detalhe:'');
+  el.style.color=status==='ok'?'var(--green)':status==='err'?'var(--red)':'var(--muted)';
+}
+
+async function loadPerfil(){
+  setSyncStatus('loading');
+  try{
+    const [p,m,c,conc]=await Promise.all([
+      sbGet('ig_posts'),
+      sbGet('ig_metas'),
+      sbGet('ig_cal'),
+      sbGet('ig_conc')
+    ]);
+    posts=p; metas=m; calPosts=c; concorrentes=conc;
+    setSyncStatus('ok');
+  }catch(e){
+    console.error('loadPerfil error:',e);
+    // Fallback para localStorage
+    posts       =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_posts')||'[]');
+    metas       =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_metas')||'[]');
+    calPosts    =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_cal')||'[]');
+    concorrentes=JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_conc')||'[]');
+    // Identifica o tipo de erro
+    const msg=e.message||'';
+    if(msg.includes('42P01')||msg.includes('relation')){
+      setSyncStatus('err','tabelas não encontradas — execute o SQL no Supabase');
+    }else if(msg.includes('401')||msg.includes('403')){
+      setSyncStatus('err','chave inválida');
+    }else if(msg.includes('Failed to fetch')||msg.includes('NetworkError')){
+      setSyncStatus('err','sem internet');
+    }else{
+      setSyncStatus('err', msg.substring(0,40));
+    }
+  }
+}
+
+// save é agora só para compatibilidade — não usamos mais localStorage como primário
+function save(key,data){localStorage.setItem('ig_'+currentPerfil+'_'+key,JSON.stringify(data));}
+
+function fmt(v){return'R$'+(parseFloat(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:0});}
+function fmtN(v){return(parseFloat(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:0});}
+function fmtP(v){return((parseFloat(v)||0).toFixed(1))+'%';}
+
+// ══ CALC ══
+function calcEng(p){
+  const eng=(parseFloat(p.curtidas||0)+parseFloat(p.coment||0)+parseFloat(p.comp||0)+parseFloat(p.salv||0));
+  const alc=parseFloat(p.alcance||1);
+  return alc>0?((eng/alc)*100):0;
+}
+function calcScore(p){
+  let s=0;
+  const eng=calcEng(p);
+  if(eng>=5)s+=30;else if(eng>=3)s+=20;else if(eng>=1)s+=10;
+  if(parseFloat(p.salv||0)>0)s+=20;
+  if(parseFloat(p.comp||0)>0)s+=15;
+  if(parseFloat(p.ret||0)>=50)s+=20;else if(parseFloat(p.ret||0)>=30)s+=10;
+  if(parseFloat(p.direct||0)>0)s+=15;
+  return Math.min(s,100);
+}
+function scoreClass(s){if(s>=80)return'score-great';if(s>=60)return'score-good';if(s>=40)return'score-avg';return'score-low';}
+function scoreLabel(s){if(s>=80)return'🔥';if(s>=60)return'✅';if(s>=40)return'😐';return'⚠️';}
+
+// ══ VIEWS ══
+function showView(id,el){
+  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.style.display='';});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('view-'+id).classList.add('active');
+  renderView(id);
+}
+function renderView(id){
+  if(id==='dashboard')renderDashboard();
+  else if(id==='metas')renderMetas();
+  else if(id==='posts')renderPosts();
+  else if(id==='analise'){document.getElementById('an-data').value=document.getElementById('an-data').value||new Date().toISOString().split('T')[0];}
+  else if(id==='calendario')renderCalendario();
+  else if(id==='acompanhamento')renderAcompanhamento();
+  else if(id==='concorrentes')renderConcorrentes();
+  else if(id==='relatorios')renderRelatorio();
+  updateBadges();
+}
+function updateBadges(){
+  document.getElementById('badge-metas').textContent=metas.length;
+}
+
+// ══ DASHBOARD ══
+let chartEngInst=null;
+function renderDashboard(){
+  const last10=posts.slice(-10).reverse();
+  const totalPosts=posts.length;
+  const engMedio=posts.length?posts.reduce((a,p)=>a+calcEng(p),0)/posts.length:0;
+  const salvTotal=posts.reduce((a,p)=>a+(parseFloat(p.salv)||0),0);
+  const alcMedio=posts.length?posts.reduce((a,p)=>a+(parseFloat(p.alcance)||0),0)/posts.length:0;
+
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Posts Registrados</div><div class="stat-value">${totalPosts}</div><div class="stat-sub">no histórico</div></div>
+    <div class="stat-card"><div class="stat-label">Engajamento Médio</div><div class="stat-value" style="color:${engMedio>=3?'var(--green)':'var(--red)'}">${fmtP(engMedio)}</div><div class="stat-sub">${engMedio>=3?'✅ Saudável':'⚠️ Precisa melhorar'}</div></div>
+    <div class="stat-card"><div class="stat-label">Alcance Médio</div><div class="stat-value">${fmtN(alcMedio)}</div><div class="stat-sub">por post</div></div>
+    <div class="stat-card"><div class="stat-label">Total Salvamentos</div><div class="stat-value" style="color:var(--purple)">${fmtN(salvTotal)}</div><div class="stat-sub">sinal de conteúdo forte</div></div>`;
+
+  // Metas
+  const mEl=document.getElementById('dashMetas');
+  if(!metas.length){mEl.innerHTML='<div style="color:var(--muted);font-size:12px">Nenhuma meta definida.<br><br><button class="btn btn-primary btn-sm" onclick="openModal(\'modalMeta\')">+ Definir meta</button></div>';}
+  else{mEl.innerHTML=metas.slice(0,3).map(m=>{const pct=m.valor>0?Math.min((m.atual/m.valor)*100,100):0;return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:600">${m.nome}</span><span style="color:var(--muted)">${fmtN(m.atual)} / ${fmtN(m.valor)}</span></div><div class="meta-bar"><div class="meta-bar-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':pct>=60?'var(--accent)':'var(--orange)'}"></div></div></div>`;}).join('');}
+
+  // Top posts
+  const top=posts.length?[...posts].sort((a,b)=>calcScore(b)-calcScore(a)).slice(0,4):[];
+  const tEl=document.getElementById('dashTopPosts');
+  if(!top.length){tEl.innerHTML='<div class="empty" style="padding:20px"><div style="font-size:24px">📸</div><div style="font-size:12px">Registre seus posts para ver o ranking.</div></div>';}
+  else{tEl.innerHTML='<table><thead><tr><th>Post</th><th>Formato</th><th>Score</th><th>Eng%</th></tr></thead><tbody>'+top.map(p=>{const sc=calcScore(p);return`<tr><td style="font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tema}</td><td style="font-size:11px">${p.formato}</td><td><div class="post-score ${scoreClass(sc)}" style="width:28px;height:28px;font-size:11px">${scoreLabel(sc)}</div></td><td style="font-weight:700">${fmtP(calcEng(p))}</td></tr>`;}).join('')+'</tbody></table>';}
+
+  // Chart
+  if(chartEngInst)chartEngInst.destroy();
+  if(last10.length){
+    chartEngInst=new Chart(document.getElementById('chartEng').getContext('2d'),{type:'bar',data:{labels:last10.map(p=>p.tema.substring(0,18)+'...'),datasets:[{label:'Engajamento %',data:last10.map(p=>calcEng(p).toFixed(2)),backgroundColor:last10.map(p=>calcEng(p)>=3?'rgba(26,158,106,.7)':'rgba(192,57,43,.5)'),borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+  }
+
+  // Alertas
+  const alertas=[];
+  if(posts.length>=3){
+    const engM=posts.reduce((a,p)=>a+calcEng(p),0)/posts.length;
+    if(engM<1)alertas.push({t:'🔴 Engajamento crítico',d:'Média abaixo de 1% — verifique os ganchos e a qualidade dos conteúdos.',c:'red'});
+    else if(engM<3)alertas.push({t:'🟡 Engajamento abaixo do ideal',d:'Meta é 3%+. Foque em conteúdos de salvamento e compartilhamento.',c:'yellow'});
+    const reelsEng=posts.filter(p=>p.formato==='Reels').map(p=>calcEng(p));
+    const carEng=posts.filter(p=>p.formato==='Carrossel').map(p=>calcEng(p));
+    if(reelsEng.length&&carEng.length){
+      const rM=reelsEng.reduce((a,v)=>a+v,0)/reelsEng.length;
+      const cM=carEng.reduce((a,v)=>a+v,0)/carEng.length;
+      if(cM>rM*1.5)alertas.push({t:'💡 Carrossel supera Reels',d:`Seus carrosséis têm ${fmtP(cM)} de eng vs ${fmtP(rM)} dos Reels. Aumente a frequência de carrosséis.`,c:'blue'});
+    }
+    const baixoAlcance=posts.filter(p=>(parseFloat(p.alcance)||0)<100);
+    if(baixoAlcance.length>posts.length*0.5)alertas.push({t:'⚠️ Alcance baixo em muitos posts',d:'Mais de 50% dos posts com alcance baixo — problema no gancho ou nos primeiros 3s.',c:'orange'});
+  }
+  const aEl=document.getElementById('dashAlertas');
+  aEl.innerHTML=alertas.length?alertas.map(a=>`<div class="alert alert-${a.c==='red'?'warn':a.c==='blue'?'info':'warn'}" style="margin-bottom:8px"><strong>${a.t}</strong><br>${a.d}</div>`).join(''):'<div style="color:var(--green);font-size:12px">✅ Nenhum alerta crítico no momento.</div>';
+
+  // Padrões
+  const pEl=document.getElementById('dashPadroes');
+  const padroes=[];
+  if(posts.length>=5){
+    const byFormat={};posts.forEach(p=>{if(!byFormat[p.formato])byFormat[p.formato]={total:0,eng:0};byFormat[p.formato].total++;byFormat[p.formato].eng+=calcEng(p);});
+    const best=Object.entries(byFormat).sort((a,b)=>(b[1].eng/b[1].total)-(a[1].eng/a[1].total))[0];
+    if(best)padroes.push(`📌 <strong>${best[0]}</strong> é o formato com melhor engajamento médio (${fmtP(best[1].eng/best[1].total)})`);
+    const altSalv=posts.filter(p=>parseFloat(p.salv||0)>10);
+    if(altSalv.length)padroes.push(`💾 Posts com mais salvamentos: ${altSalv.map(p=>p.tema.substring(0,20)).join(', ')}`);
+    const byPilar={};posts.forEach(p=>{if(!byPilar[p.pilar])byPilar[p.pilar]={total:0,eng:0};byPilar[p.pilar].total++;byPilar[p.pilar].eng+=calcEng(p);});
+    const bestPilar=Object.entries(byPilar).filter(([,v])=>v.total>=2).sort((a,b)=>(b[1].eng/b[1].total)-(a[1].eng/a[1].total))[0];
+    if(bestPilar)padroes.push(`🏛 Pilar <strong>${bestPilar[0]}</strong> gera mais engajamento`);
+  }
+  pEl.innerHTML=padroes.length?padroes.map(p=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)">${p}</div>`).join(''):'<div style="color:var(--muted);font-size:12px">Registre pelo menos 5 posts para identificar padrões.</div>';
+}
+
+// ══ METAS ══
+function renderMetas(){
+  const el=document.getElementById('metasContent');
+  if(!metas.length){el.innerHTML='<div class="empty"><div class="empty-icon">🎯</div><div class="empty-text">Nenhuma meta cadastrada.<br>Defina metas para acompanhar seu crescimento.</div></div>';return;}
+  el.innerHTML=metas.map((m,i)=>{
+    const pct=m.valor>0?Math.min((m.atual/m.valor)*100,100):0;
+    const atingida=pct>=100;
+    const cor=atingida?'var(--green)':pct>=60?'var(--accent)':'var(--orange)';
+    const priorCls={alta:'badge-red',media:'badge-yellow',baixa:'badge-green'}[m.prior]||'badge-blue';
+    return`<div class="card" style="margin-bottom:14px">
+      <div style="padding:16px 18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">${m.nome}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${m.tipo} · Prazo: ${m.prazo||'—'}</div>
+          </div>
+          <span class="badge ${priorCls}">Prioridade ${m.prior}</span>
+          ${atingida?'<span class="badge badge-green">✅ Atingida</span>':''}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+          <span>Atual: <strong>${fmtN(m.atual)}</strong></span>
+          <span>Meta: <strong>${fmtN(m.valor)}</strong></span>
+          <span style="color:${cor};font-weight:700">${pct.toFixed(0)}%</span>
+        </div>
+        <div class="meta-bar"><div class="meta-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+        ${!atingida&&pct<60?`<div style="margin-top:10px;background:var(--yellow-bg);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--yellow)">
+          💡 <strong>Para atingir esta meta:</strong> foque em ${m.tipo==='seguidores'?'reels virais com ganchos fortes e colaborações':m.tipo==='engajamento'?'conteúdos de salvamento (listas, tutoriais, dicas práticas)':m.tipo==='alcance'?'reels nos horários de pico (18h-21h) e áudios em alta':'conteúdos com CTA direto e urgência'}
+        </div>`:''}
+        <div style="margin-top:10px;display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="atualizarMeta(${i})">✏️ Atualizar valor</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deletarMeta(${i})">🗑 Excluir</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function atualizarMeta(i){
+  const novo=prompt('Valor atual do indicador:',metas[i].atual);
+  if(novo===null)return;
+  metas[i].atual=parseFloat(novo)||0;
+  if(metas[i].id)await sbUpdate('ig_metas',metas[i].id,{atual:metas[i].atual});
+  renderMetas();updateBadges();
+}
+async function deletarMeta(i){if(!confirm('Excluir esta meta?'))return;const m=metas[i];if(m.id)await sbDelete('ig_metas',m.id);metas.splice(i,1);renderMetas();updateBadges();}
+
+// ══ POSTS ══
+function renderPosts(){
+  const fmt=document.getElementById('postFilter')?.value||'';
+  const sort=document.getElementById('postSort')?.value||'data';
+  let list=[...posts].filter(p=>!fmt||p.formato===fmt);
+  if(sort==='eng')list.sort((a,b)=>calcEng(b)-calcEng(a));
+  else if(sort==='alcance')list.sort((a,b)=>(parseFloat(b.alcance)||0)-(parseFloat(a.alcance)||0));
+  else if(sort==='salv')list.sort((a,b)=>(parseFloat(b.salv)||0)-(parseFloat(a.salv)||0));
+  else list.sort((a,b)=>new Date(b.data)-new Date(a.data));
+  const el=document.getElementById('postsContent');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📸</div><div class="empty-text">Nenhum post registrado.<br>Clique em "+ Registrar post" para começar.</div></div>';return;}
+  el.innerHTML=list.map((p,i)=>{
+    const eng=calcEng(p);const sc=calcScore(p);const idx=posts.indexOf(p);
+    const formatCls={Reels:'badge-purple',Carrossel:'badge-blue',Foto:'badge-green',Stories:'badge-pink'}[p.formato]||'badge-blue';
+    return`<div class="post-card">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="post-score ${scoreClass(sc)}">${scoreLabel(sc)}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-weight:700;font-size:13px">${p.tema}</span>
+            <span class="badge ${formatCls}">${p.formato}</span>
+            <span class="badge badge-orange">${p.pilar||'—'}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:auto">${p.data?new Date(p.data).toLocaleDateString('pt-BR'):''}</span>
+          </div>
+          ${p.link?`<div style="font-size:10px;color:var(--accent);font-family:monospace;margin-bottom:6px">🔗 <a href="${p.link}" target="_blank">${p.link.substring(0,50)}...</a></div>`:''}
+          ${p.gancho?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic">"${p.gancho}"</div>`:''}
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px">
+            ${[['👁',p.views,'Views'],['📍',p.alcance,'Alcance'],['❤️',p.curtidas,'Curtidas'],['💾',p.salv,'Salv.'],['🔁',p.comp,'Comp.']].map(([ic,v,l])=>`<div style="text-align:center;background:var(--bg);border-radius:7px;padding:6px;"><div style="font-size:14px">${ic}</div><div style="font-size:12px;font-weight:700">${fmtN(v||0)}</div><div style="font-size:9px;color:var(--muted)">${l}</div></div>`).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:11px;font-weight:700;color:${eng>=3?'var(--green)':'var(--red)'}">Eng: ${fmtP(eng)}</span>
+            ${p.ret?`<span style="font-size:11px;color:var(--muted)">Retenção: ${p.ret}%</span>`:''}
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="analisarPostSalvo(${idx})">🔬 Analisar</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deletarPost(${idx})">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function analisarPostSalvo(idx){
+  const p=posts[idx];
+  // Preenche formulário de análise
+  ['tema','link','formato','data','views','alcance','curtidas','coment','comp','salv','cliques','direct','ret','obs'].forEach(f=>{
+    const el=document.getElementById('an-'+f);if(el&&p[f]!==undefined)el.value=p[f];
+  });
+  showView('analise',null);
+  setTimeout(()=>analisarPost(),300);
+}
+
+// ══ ANÁLISE DE POST ══
+function analisarPost(){
+  const views=parseFloat(document.getElementById('an-views').value)||0;
+  const alcance=parseFloat(document.getElementById('an-alcance').value)||0;
+  const curtidas=parseFloat(document.getElementById('an-curtidas').value)||0;
+  const coment=parseFloat(document.getElementById('an-coment').value)||0;
+  const comp=parseFloat(document.getElementById('an-comp').value)||0;
+  const salv=parseFloat(document.getElementById('an-salv').value)||0;
+  const ret=parseFloat(document.getElementById('an-ret').value)||0;
+  const cliques=parseFloat(document.getElementById('an-cliques').value)||0;
+  const direct=parseFloat(document.getElementById('an-direct').value)||0;
+  const tema=document.getElementById('an-tema').value||'não informado';
+  const link=document.getElementById('an-link').value||'';
+  const obs=document.getElementById('an-obs').value||'';
+
+  if(!alcance&&!views){alert('Informe pelo menos as views ou o alcance.');return;}
+
+  const eng=alcance>0?((curtidas+coment+comp+salv)/alcance*100):0;
+  const ctr=views>0?(cliques/views*100):0;
+
+  const el=document.getElementById('analiseResult');
+
+  // Score visual
+  const scores={eng:eng>=5?'🔥 Excelente':eng>=3?'✅ Bom':eng>=1?'😐 Médio':'⚠️ Baixo',salv:salv>20?'🔥 Alto':salv>5?'✅ Bom':salv>0?'😐 Médio':'⚠️ Zero',comp:comp>10?'🔥 Viral':comp>3?'✅ Bom':comp>0?'😐 Médio':'⚠️ Zero',ret:ret>=50?'🔥 Ótima':ret>=30?'✅ Boa':ret>0?'😐 Regular':'⚠️ N/A',ctr:ctr>=2?'✅ Bom':ctr>0?'😐 Médio':'⚠️ Zero'};
+
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-header"><span>🔬</span><span class="card-title">Diagnóstico — ${tema}</span>
+        ${link?`<a href="${link}" target="_blank" style="font-size:11px;color:var(--accent);margin-left:auto">🔗 Ver post</a>`:''}
+      </div>
+      <div style="padding:16px">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
+          ${[['Eng. Taxa',fmtP(eng),scores.eng],['Salvamentos',fmtN(salv),scores.salv],['Compartilh.',fmtN(comp),scores.comp],['Retenção',ret?fmtP(ret):'N/A',scores.ret],['CTR',fmtP(ctr),scores.ctr]].map(([l,v,s])=>`
+            <div style="text-align:center;background:var(--bg);border-radius:8px;padding:10px">
+              <div style="font-size:16px;margin-bottom:4px">${s.split(' ')[0]}</div>
+              <div style="font-size:16px;font-weight:800">${v}</div>
+              <div style="font-size:10px;color:var(--muted)">${l}</div>
+            </div>`).join('')}
+        </div>
+
+        <div id="analiseIA" style="background:var(--al);border-radius:9px;padding:14px;font-size:13px;line-height:1.8">
+          <div style="display:flex;align-items:center;gap:8px;color:var(--accent);font-weight:600;margin-bottom:8px">
+            🧠 Analisando com IA...
+            <div class="loading-spinner" style="width:16px;height:16px;border-width:2px"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Chama IA para análise
+  const prompt=`Analise este post do Instagram:
+
+Tema: ${tema}
+Link: ${link||'não informado'}
+Formato: ${document.getElementById('an-formato').value}
+Observações: ${obs||'nenhuma'}
+
+MÉTRICAS:
+- Views: ${fmtN(views)}
+- Alcance: ${fmtN(alcance)}
+- Impressões: ${fmtN(document.getElementById('an-imp').value||0)}
+- Curtidas: ${fmtN(curtidas)}
+- Comentários: ${fmtN(coment)}
+- Compartilhamentos: ${fmtN(comp)}
+- Salvamentos: ${fmtN(salv)}
+- Cliques no link: ${fmtN(cliques)}
+- DMs: ${fmtN(direct)}
+- Taxa de engajamento: ${fmtP(eng)}
+- Retenção: ${ret?fmtP(ret):'não informada'}
+
+Faça uma análise completa seguindo esta estrutura:
+1. DIAGNÓSTICO GERAL (o conteúdo é forte, médio ou fraco? por quê?)
+2. O GANCHO FUNCIONOU? (análise baseada na retenção e primeiros números)
+3. O QUE FUNCIONOU BEM (pontos positivos com base nos dados)
+4. O QUE NÃO FUNCIONOU (problemas identificados)
+5. DIAGNÓSTICO DO PROBLEMA PRINCIPAL (use o raciocínio: baixo alcance = gancho/distribuição; alto alcance + baixo eng = conteúdo fraco; alto eng + baixa conversão = falta de CTA)
+6. 3 AÇÕES CONCRETAS PARA MELHORAR
+7. SCORE FINAL: X/10 com justificativa`;
+
+  callIA(prompt,[],result=>{
+    const div=document.getElementById('analiseIA');
+    if(div)div.innerHTML='<div style="font-weight:600;color:var(--accent);margin-bottom:8px">🧠 Análise da IA</div>'+fmtChat(result);
+  });
+}
+
+function salvarAnalise(){
+  const tema=document.getElementById('an-tema').value.trim();
+  if(!tema){alert('Informe o tema do post.');return;}
+  const p={
+    tema, link:document.getElementById('an-link').value,
+    formato:document.getElementById('an-formato').value,
+    data:document.getElementById('an-data').value,
+    pilar:'Análise avulsa',
+    views:document.getElementById('an-views').value,
+    alcance:document.getElementById('an-alcance').value,
+    curtidas:document.getElementById('an-curtidas').value,
+    coment:document.getElementById('an-coment').value,
+    comp:document.getElementById('an-comp').value,
+    salv:document.getElementById('an-salv').value,
+    cliques:document.getElementById('an-cliques').value,
+    direct:document.getElementById('an-direct').value,
+    ret:document.getElementById('an-ret').value,
+    obs:document.getElementById('an-obs').value
+  };
+  posts.push(p);save('ig_posts',posts);
+  alert('✅ Post salvo!');
+}
+
+// ══ CALENDÁRIO ══
+function renderCalendario(){
+  const ano=calMes.getFullYear();const mes=calMes.getMonth();
+  document.getElementById('calMesLabel').textContent=calMes.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  document.getElementById('calHeader').innerHTML=dias.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px">${d}</div>`).join('');
+  const primeiro=new Date(ano,mes,1).getDay();
+  const ultimo=new Date(ano,mes+1,0).getDate();
+  const hoje=new Date();
+  let html='';
+  for(let i=0;i<primeiro;i++)html+='<div></div>';
+  for(let d=1;d<=ultimo;d++){
+    const dt=`${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayPosts=calPosts.filter(p=>p.data===dt);
+    const isHoje=hoje.getFullYear()===ano&&hoje.getMonth()===mes&&hoje.getDate()===d;
+    html+=`<div class="cal-day ${isHoje?'today':''} ${dayPosts.length?'has-post':''}" onclick="abrirCalDia('${dt}')">
+      <div class="cal-date">${d}</div>
+      ${dayPosts.map(p=>`<span class="cal-post-tag">${p.formato}: ${p.tema.substring(0,15)}</span>`).join('')}
+    </div>`;
+  }
+  document.getElementById('calBody').innerHTML=html;
+}
+function mesAnterior(){calMes.setMonth(calMes.getMonth()-1);renderCalendario();}
+function mesProximo(){calMes.setMonth(calMes.getMonth()+1);renderCalendario();}
+function abrirCalDia(dt){document.getElementById('cal-data').value=dt;openModal('modalCalPost');}
+
+// ══ ACOMPANHAMENTO ══
+function renderAcompanhamento(){
+  const el=document.getElementById('acompContent');
+  if(posts.length<2){el.innerHTML='<div class="empty"><div class="empty-icon">📈</div><div class="empty-text">Registre pelo menos 2 posts para ver o acompanhamento de evolução.</div></div>';return;}
+  const sorted=[...posts].sort((a,b)=>new Date(a.data)-new Date(b.data));
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-header"><span>📊</span><span class="card-title">Evolução de Performance</span></div>
+      <table><thead><tr><th>#</th><th>Post</th><th>Data</th><th>Formato</th><th>Alcance</th><th>Eng%</th><th>Salv.</th><th>Score</th><th>Tendência</th></tr></thead><tbody>
+      ${sorted.map((p,i)=>{
+        const eng=calcEng(p);const sc=calcScore(p);
+        const prev=sorted[i-1];const engPrev=prev?calcEng(prev):null;
+        const trend=engPrev!==null?(eng>engPrev?'📈':'📉'):'—';
+        return`<tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td style="font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.link?`<a href="${p.link}" target="_blank" style="color:var(--accent)">${p.tema}</a>`:p.tema}</td>
+          <td style="font-size:11px">${p.data?new Date(p.data).toLocaleDateString('pt-BR'):'—'}</td>
+          <td><span class="badge badge-purple">${p.formato}</span></td>
+          <td>${fmtN(p.alcance||0)}</td>
+          <td style="font-weight:700;color:${eng>=3?'var(--green)':'var(--red)'}">${fmtP(eng)}</td>
+          <td style="color:var(--purple);font-weight:700">${fmtN(p.salv||0)}</td>
+          <td><div class="post-score ${scoreClass(sc)}" style="width:26px;height:26px;font-size:11px">${scoreLabel(sc)}</div></td>
+          <td style="font-size:16px">${trend}</td>
+        </tr>`;}).join('')}
+      </tbody></table>
+    </div>`;
+}
+
+// ══ MODAIS ══
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='modalPost')document.getElementById('p-data').value=new Date().toISOString().split('T')[0];
+  if(id==='modalRelManual'){
+    currentRelManualEdit=null;
+    document.getElementById('relManualTitle').textContent='Cadastrar Período';
+    document.getElementById('btnSalvRelManual').textContent='Salvar período';
+    limparFormRelManual();
+    if(window._relArquivoNome){document.getElementById('rm-arquivo').value=window._relArquivoNome;window._relArquivoNome=null;}
+    document.getElementById('rm-periodo').value=new Date().toISOString().substring(0,7);
+  }
+  if(id==='modalConcorrente'){
+    currentConcId=null;
+    document.getElementById('concModalTitle').textContent='Adicionar Concorrente';
+    document.getElementById('btnSalvConc').textContent='Salvar concorrente';
+    limparFormConc();
+    document.getElementById('conc-data').value=new Date().toISOString().split('T')[0];
+  }
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+async function salvarPost(){
+  const tema=document.getElementById('p-tema').value.trim();
+  if(!tema){alert('Informe o tema do post.');return;}
+  const obj={tema,link:document.getElementById('p-link').value,formato:document.getElementById('p-formato').value,data:document.getElementById('p-data').value||null,pilar:document.getElementById('p-pilar').value,gancho:document.getElementById('p-gancho').value,views:parseFloat(document.getElementById('p-views').value)||0,alcance:parseFloat(document.getElementById('p-alcance').value)||0,curtidas:parseFloat(document.getElementById('p-curtidas').value)||0,coment:parseFloat(document.getElementById('p-coment').value)||0,comp:parseFloat(document.getElementById('p-comp').value)||0,salv:parseFloat(document.getElementById('p-salv').value)||0,cliques:parseFloat(document.getElementById('p-cliques').value)||0,direct:parseFloat(document.getElementById('p-direct').value)||0,ret:parseFloat(document.getElementById('p-ret').value)||0,obs:document.getElementById('p-obs').value};
+  setSyncStatus('loading');
+  const novo=await sbInsert('ig_posts',obj);
+  if(novo){posts.unshift(novo);}else{posts.unshift({...obj,id:Date.now().toString(),perfil:currentPerfil});}
+  setSyncStatus('ok');
+  closeModal('modalPost');
+  ['p-tema','p-link','p-gancho','p-views','p-alcance','p-curtidas','p-coment','p-comp','p-salv','p-cliques','p-direct','p-ret','p-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderDashboard();renderPosts();updateBadges();
+}
+async function deletarPost(i){if(!confirm('Excluir este post?'))return;const p=posts[i];if(p.id)await sbDelete('ig_posts',p.id);posts.splice(i,1);renderPosts();renderDashboard();}
+
+async function salvarMeta(){
+  const nome=document.getElementById('m-nome').value.trim();
+  if(!nome){alert('Informe o nome da meta.');return;}
+  const obj={nome,tipo:document.getElementById('m-tipo').value,valor:parseFloat(document.getElementById('m-valor').value)||0,atual:parseFloat(document.getElementById('m-atual').value)||0,prazo:document.getElementById('m-prazo').value,prior:document.getElementById('m-prior').value};
+  setSyncStatus('loading');
+  const novo=await sbInsert('ig_metas',obj);
+  if(novo){metas.unshift(novo);}else{metas.unshift({...obj,id:Date.now().toString(),perfil:currentPerfil});}
+  setSyncStatus('ok');
+  closeModal('modalMeta');
+  ['m-nome','m-valor','m-atual'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderMetas();updateBadges();
+}
+
+async function salvarCalPost(){
+  const tema=document.getElementById('cal-tema').value.trim();
+  if(!tema){alert('Informe o tema.');return;}
+  const obj={tema,data:document.getElementById('cal-data').value||null,formato:document.getElementById('cal-formato').value,pilar:document.getElementById('cal-pilar').value,gancho:document.getElementById('cal-gancho').value,status:document.getElementById('cal-status').value};
+  setSyncStatus('loading');
+  const novo=await sbInsert('ig_cal',obj);
+  if(novo){calPosts.push(novo);}else{calPosts.push({...obj,id:Date.now().toString(),perfil:currentPerfil});}
+  setSyncStatus('ok');
+  closeModal('modalCalPost');renderCalendario();
+}
+
+// ══ RELATÓRIOS ══
+function popularRelMes(){
+  const sel=document.getElementById('relMes');if(!sel)return;
+  const periodo=document.getElementById('relPeriodo')?.value||'mensal';
+  if(periodo==='mensal'){
+    const meses=new Set(posts.map(p=>p.data?.substring(0,7)).filter(Boolean));
+    const cur=new Date().toISOString().substring(0,7);
+    if(!meses.has(cur))meses.add(cur);
+    sel.innerHTML=[...meses].sort((a,b)=>b.localeCompare(a)).map(m=>`<option value="${m}">${new Date(m+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</option>`).join('');
+  } else {
+    const anos=new Set(posts.map(p=>p.data?.substring(0,4)).filter(Boolean));
+    const curAno=new Date().getFullYear().toString();
+    if(!anos.has(curAno))anos.add(curAno);
+    sel.innerHTML=[...anos].sort((a,b)=>b.localeCompare(a)).map(a=>`<option value="${a}">${a}</option>`).join('');
+  }
+}
+
+function renderRelatorio(){
+  popularRelMes();
+  const periodo=document.getElementById('relPeriodo')?.value||'mensal';
+  const sel=document.getElementById('relMes')?.value||'';
+  const el=document.getElementById('relContent');if(!el)return;
+
+  let filtrados=posts.filter(p=>{
+    if(!p.data)return false;
+    return periodo==='mensal'?p.data.startsWith(sel):p.data.startsWith(sel);
+  });
+
+  if(!filtrados.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nenhum post encontrado para este período.<br>Registre posts para gerar relatórios.</div></div>';
+    return;
+  }
+
+  const totalPosts=filtrados.length;
+  const engMedio=filtrados.reduce((a,p)=>a+calcEng(p),0)/totalPosts;
+  const alcMedio=filtrados.reduce((a,p)=>a+(parseFloat(p.alcance)||0),0)/totalPosts;
+  const totalSalv=filtrados.reduce((a,p)=>a+(parseFloat(p.salv)||0),0);
+  const totalComp=filtrados.reduce((a,p)=>a+(parseFloat(p.comp)||0),0);
+  const totalViews=filtrados.reduce((a,p)=>a+(parseFloat(p.views)||0),0);
+  const totalDirect=filtrados.reduce((a,p)=>a+(parseFloat(p.direct)||0),0);
+
+  // Por formato
+  const byFormato={};
+  filtrados.forEach(p=>{if(!byFormato[p.formato])byFormato[p.formato]={posts:0,eng:0,salv:0,alcance:0};byFormato[p.formato].posts++;byFormato[p.formato].eng+=calcEng(p);byFormato[p.formato].salv+=parseFloat(p.salv||0);byFormato[p.formato].alcance+=parseFloat(p.alcance||0);});
+
+  // Top 3
+  const top3=[...filtrados].sort((a,b)=>calcScore(b)-calcScore(a)).slice(0,3);
+
+  const titulo=periodo==='mensal'?`Relatório Mensal — ${new Date(sel+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}`:(`Relatório Anual — ${sel}`);
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div style="background:linear-gradient(135deg,var(--al),#f0e8ff);padding:18px 20px;border-radius:13px 13px 0 0">
+        <div style="font-size:17px;font-weight:800">${titulo}</div>
+        <div style="font-size:11px;color:var(--muted)">Gerado em ${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="padding:16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          ${[['📸','Posts',totalPosts,'publicados'],['📈','Eng. Médio',fmtP(engMedio),engMedio>=3?'✅ saudável':'⚠️ abaixo'],['👁','Alcance Médio',fmtN(alcMedio),'por post'],['💾','Salvamentos',fmtN(totalSalv),'total']].map(([ic,l,v,s])=>`
+            <div style="text-align:center;background:var(--bg);border-radius:8px;padding:12px">
+              <div style="font-size:20px;margin-bottom:4px">${ic}</div>
+              <div style="font-size:18px;font-weight:800">${v}</div>
+              <div style="font-size:10px;color:var(--muted)">${l} · ${s}</div>
+            </div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          ${[['🔁','Compartilhamentos',fmtN(totalComp)],['👀','Total de Views',fmtN(totalViews)],['💬','DMs Gerados',fmtN(totalDirect)],['🏆','Melhor Score',top3[0]?calcScore(top3[0])+'/100':'—']].map(([ic,l,v])=>`
+            <div style="text-align:center;background:var(--bg);border-radius:8px;padding:12px">
+              <div style="font-size:14px;margin-bottom:4px">${ic} <span style="font-size:10px;color:var(--muted)">${l}</span></div>
+              <div style="font-size:18px;font-weight:800">${v}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="row-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-header"><span>🏆</span><span class="card-title">Top 3 Posts do Período</span></div>
+        <div style="padding:12px">
+          ${top3.map((p,i)=>{const sc=calcScore(p);return`<div style="display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg);border-radius:8px;margin-bottom:6px">
+            <div style="font-size:18px;width:24px;text-align:center">${['🥇','🥈','🥉'][i]}</div>
+            <div style="flex:1"><div style="font-weight:600;font-size:12px">${p.tema}</div><div style="font-size:10px;color:var(--muted)">${p.formato} · Eng: ${fmtP(calcEng(p))} · Salv: ${p.salv||0}</div></div>
+            <div class="post-score ${scoreClass(sc)}" style="width:26px;height:26px;font-size:11px">${scoreLabel(sc)}</div>
+          </div>`;}).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span>📊</span><span class="card-title">Performance por Formato</span></div>
+        <table><thead><tr><th>Formato</th><th>Posts</th><th>Eng. Médio</th><th>Salv. Total</th></tr></thead><tbody>
+          ${Object.entries(byFormato).sort((a,b)=>(b[1].eng/b[1].posts)-(a[1].eng/a[1].posts)).map(([f,v])=>`
+          <tr><td style="font-weight:600">${f}</td><td>${v.posts}</td><td style="font-weight:700;color:${v.eng/v.posts>=3?'var(--green)':'var(--red)'}">${fmtP(v.eng/v.posts)}</td><td style="color:var(--purple);font-weight:700">${fmtN(v.salv)}</td></tr>`).join('')}
+        </tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span>📋</span><span class="card-title">Todos os Posts do Período</span><span class="card-sub">${totalPosts} posts</span></div>
+      <table id="relTable"><thead><tr><th>Data</th><th>Post</th><th>Formato</th><th>Pilar</th><th>Alcance</th><th>Curtidas</th><th>Salv.</th><th>Comp.</th><th>Eng%</th><th>Score</th></tr></thead><tbody>
+        ${filtrados.sort((a,b)=>new Date(b.data)-new Date(a.data)).map(p=>`<tr>
+          <td style="font-size:11px">${p.data?new Date(p.data).toLocaleDateString('pt-BR'):''}</td>
+          <td style="font-weight:600;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.link?`<a href="${p.link}" target="_blank" style="color:var(--accent)">${p.tema}</a>`:p.tema}</td>
+          <td><span class="badge badge-purple">${p.formato}</span></td>
+          <td style="font-size:10px;color:var(--muted)">${p.pilar||'—'}</td>
+          <td>${fmtN(p.alcance||0)}</td><td>${fmtN(p.curtidas||0)}</td>
+          <td style="color:var(--purple);font-weight:700">${fmtN(p.salv||0)}</td>
+          <td>${fmtN(p.comp||0)}</td>
+          <td style="font-weight:700;color:${calcEng(p)>=3?'var(--green)':'var(--red)'}">${fmtP(calcEng(p))}</td>
+          <td>${calcScore(p)}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>`;
+}
+
+function exportarRelatorio(){
+  const periodo=document.getElementById('relPeriodo')?.value||'mensal';
+  const sel=document.getElementById('relMes')?.value||'';
+  const filtrados=posts.filter(p=>p.data&&p.data.startsWith(sel));
+  if(!filtrados.length){alert('Nenhum dado para exportar.');return;}
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const titulo=periodo==='mensal'?`Relatório Mensal ${sel}`:(`Relatório Anual ${sel}`);
+  const engMedio=filtrados.reduce((a,p)=>a+calcEng(p),0)/filtrados.length;
+  const alcMedio=filtrados.reduce((a,p)=>a+(parseFloat(p.alcance)||0),0)/filtrados.length;
+  const rows=[
+    [p?.nome||'Gestão de Redes',' — '+titulo],['Gerado em: '+new Date().toLocaleDateString('pt-BR')],[],
+    ['RESUMO'],['Total de Posts',filtrados.length],['Engajamento Médio',fmtP(engMedio)],['Alcance Médio',fmtN(alcMedio)],['Total Salvamentos',filtrados.reduce((a,p)=>a+(parseFloat(p.salv)||0),0)],['Total Compartilhamentos',filtrados.reduce((a,p)=>a+(parseFloat(p.comp)||0),0)],[],
+    ['POSTS DETALHADOS'],['Data','Post','Link','Formato','Pilar','Alcance','Curtidas','Comentários','Compartilh.','Salvamentos','DMs','Eng%','Score'],
+    ...filtrados.sort((a,b)=>new Date(b.data)-new Date(a.data)).map(p=>[p.data,p.tema,p.link||'',p.formato,p.pilar||'',p.alcance||0,p.curtidas||0,p.coment||0,p.comp||0,p.salv||0,p.direct||0,fmtP(calcEng(p)),calcScore(p)])
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Relatório');
+  XLSX.writeFile(wb,titulo.replace(/ /g,'-')+'.xlsx');
+}
+
+// ══ RELATÓRIOS MANUAIS ══
+let relManuais = JSON.parse(localStorage.getItem('ig_relmanuais_'+currentPerfil)||'[]');
+let currentRelManualEdit = null;
+
+function setRelTab(tab){
+  document.getElementById('relAbaAuto').style.display = tab==='auto'?'block':'none';
+  document.getElementById('relAbaManual').style.display = tab==='manual'?'block':'none';
+  document.getElementById('relTab1').style.background = tab==='auto'?'var(--accent)':'var(--white)';
+  document.getElementById('relTab1').style.color = tab==='auto'?'white':'var(--muted)';
+  document.getElementById('relTab2').style.background = tab==='manual'?'var(--accent)':'var(--white)';
+  document.getElementById('relTab2').style.color = tab==='manual'?'white':'var(--muted)';
+  if(tab==='manual') renderRelManual();
+  if(tab==='auto') renderRelatorio();
+}
+
+function loadRelManuais(){
+  relManuais = JSON.parse(localStorage.getItem('ig_relmanuais_'+currentPerfil)||'[]');
+}
+
+function renderRelManual(){
+  loadRelManuais();
+  const el=document.getElementById('relManualContent');if(!el)return;
+  if(!relManuais.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📁</div><div class="empty-text">Nenhum relatório manual cadastrado.<br>Clique em "+ Cadastrar período" para adicionar dados históricos<br>ou em "📤 Subir arquivo" para anexar um relatório externo.</div></div>`;
+    return;
+  }
+  const sorted=[...relManuais].sort((a,b)=>b.periodo.localeCompare(a.periodo));
+  el.innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="stat-card"><div class="stat-label">Períodos registrados</div><div class="stat-value">${relManuais.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Eng. médio histórico</div><div class="stat-value" style="color:var(--accent)">${fmtP(relManuais.filter(r=>r.eng>0).reduce((a,r)=>a+(parseFloat(r.eng)||0),0)/(relManuais.filter(r=>r.eng>0).length||1))}</div></div>
+        <div class="stat-card"><div class="stat-label">Total posts histórico</div><div class="stat-value">${fmtN(relManuais.reduce((a,r)=>a+(parseFloat(r.posts)||0),0))}</div></div>
+        <div class="stat-card"><div class="stat-label">Arquivos anexados</div><div class="stat-value" style="color:var(--green)">${relManuais.filter(r=>r.arquivo||r.dadosArquivo).length}</div></div>
+      </div>
+    </div>
+    ${sorted.map((r,i)=>{
+      const idx=relManuais.indexOf(r);
+      const label=r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo;
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;color:white;font-weight:800;flex-shrink:0">📅</div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:14px">${label}</div>
+              ${r.desc?`<div style="font-size:11px;color:var(--muted)">${r.desc}</div>`:''}
+            </div>
+            ${r.arquivo||r.dadosArquivo?`<span class="badge badge-green">📎 Arquivo</span>`:''}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px">
+            ${[['📸','Posts',fmtN(r.posts||0)],['📈','Eng. Médio',r.eng?fmtP(r.eng):'—'],['👁','Alcance Médio',fmtN(r.alcance||0)],['💾','Salvamentos',fmtN(r.salv||0)],['➕','Novos Seg.',fmtN(r.seg||0)]].map(([ic,l,v])=>`
+              <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px">
+                <div style="font-size:14px">${ic}</div><div style="font-size:13px;font-weight:700">${v}</div>
+                <div style="font-size:9px;color:var(--muted)">${l}</div>
+              </div>`).join('')}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+            ${[['🔁','Compartilh.',fmtN(r.comp||0)],['👀','Views',fmtN(r.views||0)],['💬','DMs',fmtN(r.direct||0)],['❤️','Curtidas',fmtN(r.curtidas||0)]].map(([ic,l,v])=>`
+              <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px">
+                <div style="font-size:14px">${ic}</div><div style="font-size:13px;font-weight:700">${v}</div>
+                <div style="font-size:9px;color:var(--muted)">${l}</div>
+              </div>`).join('')}
+          </div>
+          ${r.bestpost?`<div style="background:var(--al);border-radius:7px;padding:8px 10px;font-size:12px;margin-bottom:8px">🏆 <strong>Melhor post:</strong> ${r.bestpost}</div>`:''}
+          ${r.arquivo?`<div style="background:var(--green-bg);border-radius:7px;padding:8px 10px;font-size:12px;margin-bottom:8px">📎 <strong>Arquivo:</strong> ${r.arquivo}</div>`:''}
+          ${r.dadosArquivo?`<div style="background:var(--green-bg);border-radius:7px;padding:8px 10px;font-size:11px;margin-bottom:8px;max-height:80px;overflow:hidden">📊 <strong>Dados do arquivo:</strong><br><span style="color:var(--muted)">${r.dadosArquivo.substring(0,200)}${r.dadosArquivo.length>200?'...':''}</span></div>`:''}
+          ${r.obs?`<div style="font-size:12px;color:var(--muted);background:var(--bg);border-radius:7px;padding:8px 10px;margin-bottom:8px">${r.obs}</div>`:''}
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-ghost btn-sm" onclick="editarRelManual(${idx})">✏️ Editar</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarRelManualUnico(${idx})">📥 Exportar</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarRelManualUnicoParaClaude(${idx})" style="border-color:var(--purple);color:var(--purple)">🤖 Claude</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deletarRelManual(${idx})">🗑 Excluir</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+function salvarRelManual(){
+  const periodo=document.getElementById('rm-periodo').value;
+  if(!periodo){alert('Informe o período.');return;}
+  const obj={
+    periodo, desc:document.getElementById('rm-desc').value,
+    posts:parseFloat(document.getElementById('rm-posts').value)||0,
+    eng:parseFloat(document.getElementById('rm-eng').value)||0,
+    alcance:parseFloat(document.getElementById('rm-alcance').value)||0,
+    salv:parseFloat(document.getElementById('rm-salv').value)||0,
+    comp:parseFloat(document.getElementById('rm-comp').value)||0,
+    views:parseFloat(document.getElementById('rm-views').value)||0,
+    curtidas:parseFloat(document.getElementById('rm-curtidas').value)||0,
+    coment:parseFloat(document.getElementById('rm-coment').value)||0,
+    direct:parseFloat(document.getElementById('rm-direct').value)||0,
+    seg:parseFloat(document.getElementById('rm-seg').value)||0,
+    bestpost:document.getElementById('rm-bestpost').value,
+    arquivo:document.getElementById('rm-arquivo').value,
+    obs:document.getElementById('rm-obs').value,
+    criadoEm:new Date().toISOString()
+  };
+  loadRelManuais();
+  if(currentRelManualEdit!==null){relManuais[currentRelManualEdit]={...relManuais[currentRelManualEdit],...obj};}
+  else{relManuais.push(obj);}
+  localStorage.setItem('ig_relmanuais_'+currentPerfil,JSON.stringify(relManuais));
+  closeModal('modalRelManual');currentRelManualEdit=null;
+  limparFormRelManual();
+  renderRelManual();
+}
+
+function limparFormRelManual(){
+  ['rm-periodo','rm-desc','rm-posts','rm-eng','rm-alcance','rm-salv','rm-comp','rm-views','rm-curtidas','rm-coment','rm-direct','rm-seg','rm-bestpost','rm-arquivo','rm-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function editarRelManual(idx){
+  loadRelManuais();
+  const r=relManuais[idx];currentRelManualEdit=idx;
+  document.getElementById('relManualTitle').textContent='Editar Período';
+  document.getElementById('btnSalvRelManual').textContent='Atualizar';
+  document.getElementById('rm-periodo').value=r.periodo||'';
+  document.getElementById('rm-desc').value=r.desc||'';
+  document.getElementById('rm-posts').value=r.posts||'';
+  document.getElementById('rm-eng').value=r.eng||'';
+  document.getElementById('rm-alcance').value=r.alcance||'';
+  document.getElementById('rm-salv').value=r.salv||'';
+  document.getElementById('rm-comp').value=r.comp||'';
+  document.getElementById('rm-views').value=r.views||'';
+  document.getElementById('rm-curtidas').value=r.curtidas||'';
+  document.getElementById('rm-coment').value=r.coment||'';
+  document.getElementById('rm-direct').value=r.direct||'';
+  document.getElementById('rm-seg').value=r.seg||'';
+  document.getElementById('rm-bestpost').value=r.bestpost||'';
+  document.getElementById('rm-arquivo').value=r.arquivo||'';
+  document.getElementById('rm-obs').value=r.obs||'';
+  openModal('modalRelManual');
+}
+
+function deletarRelManual(idx){
+  if(!confirm('Excluir este período do histórico?'))return;
+  loadRelManuais();relManuais.splice(idx,1);
+  localStorage.setItem('ig_relmanuais_'+currentPerfil,JSON.stringify(relManuais));
+  renderRelManual();
+}
+
+function exportarRelManualUnico(idx){
+  loadRelManuais();const r=relManuais[idx];
+  const label=r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo;
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const rows=[
+    [p?.nome||'Gestão de Redes',' — Relatório '+label],['Gerado em: '+new Date().toLocaleDateString('pt-BR')],[],
+    ['Período',label],['Descrição',r.desc||'—'],[],
+    ['MÉTRICAS'],['Total de Posts',r.posts||0],['Engajamento Médio %',r.eng||0],['Alcance Médio',r.alcance||0],['Salvamentos',r.salv||0],['Compartilhamentos',r.comp||0],['Views',r.views||0],['Curtidas',r.curtidas||0],['Comentários',r.coment||0],['DMs',r.direct||0],['Novos Seguidores',r.seg||0],[],
+    ['Melhor Post',r.bestpost||'—'],['Arquivo referência',r.arquivo||'—'],['Observações',r.obs||'—']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Relatório');
+  XLSX.writeFile(wb,'Relatorio-'+r.periodo+'.xlsx');
+}
+
+function exportarHistoricoManual(){
+  loadRelManuais();
+  if(!relManuais.length){alert('Nenhum relatório manual cadastrado.');return;}
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const rows=[
+    [p?.nome||'Gestão de Redes',' — Histórico Completo'],['Gerado em: '+new Date().toLocaleDateString('pt-BR')],[],
+    ['Período','Descrição','Posts','Eng%','Alcance Médio','Salvamentos','Comp.','Views','Curtidas','Coment.','DMs','Novos Seg.','Melhor Post','Arquivo','Observações'],
+    ...[...relManuais].sort((a,b)=>b.periodo.localeCompare(a.periodo)).map(r=>[
+      r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo,
+      r.desc||'',r.posts||0,r.eng||0,r.alcance||0,r.salv||0,r.comp||0,r.views||0,r.curtidas||0,r.coment||0,r.direct||0,r.seg||0,r.bestpost||'',r.arquivo||'',r.obs||''
+    ])
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Histórico');
+  XLSX.writeFile(wb,'Historico-'+currentPerfil+'.xlsx');
+}
+
+function exportarRelManualUnicoParaClaude(idx){
+  loadRelManuais();const r=relManuais[idx];
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const label=r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo;
+  const texto=`Olá! Seguem os dados do Instagram do perfil **${p?.nome||currentPerfil}** referente ao período **${label}**:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 PERÍODO: ${label}${r.desc?' — '+r.desc:''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Posts publicados: ${r.posts||'—'}
+Engajamento médio: ${r.eng?fmtP(r.eng):'—'}
+Alcance médio por post: ${fmtN(r.alcance||0)}
+Total de salvamentos: ${fmtN(r.salv||0)}
+Total de compartilhamentos: ${fmtN(r.comp||0)}
+Total de views: ${fmtN(r.views||0)}
+Total de curtidas: ${fmtN(r.curtidas||0)}
+Total de comentários: ${fmtN(r.coment||0)}
+DMs / Directs: ${fmtN(r.direct||0)}
+Novos seguidores: ${fmtN(r.seg||0)}
+${r.bestpost?'\nMelhor post do período: '+r.bestpost:''}
+${r.arquivo?'\nArquivo de referência: '+r.arquivo:''}
+${r.obs?'\nContexto / Observações: '+r.obs:''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❓ O QUE PRECISO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Os números deste período estão bons, médios ou ruins para o meu nicho?
+2. Quais métricas merecem atenção e como melhorá-las?
+3. O que posso aprender deste período para aplicar nos próximos?
+4. Quais ações concretas devo tomar com base nesses dados?`;
+
+  const el=document.getElementById('claudeExportText');
+  if(el){el.value=texto;openModal('modalClaude');}
+  else{navigator.clipboard.writeText(texto).then(()=>mostrarToast('✅ Copiado!','green'));}
+}
+  const file=input.files[0];if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+
+  function tentarPreencher(rows){
+    // Tenta identificar colunas e preencher automaticamente
+    const texto=rows.map(r=>r.join(' | ')).join('\n');
+    window._relArquivoPreview=texto;
+    window._relArquivoNome=file.name;
+    document.getElementById('rm-arquivo').value=file.name;
+
+    // Tenta extrair valores procurando palavras-chave nas linhas
+    rows.forEach(row=>{
+      const linha=row.map(c=>(c||'').toString().toLowerCase()).join(' ');
+      const valores=row.map(c=>parseFloat((c||'').toString().replace(',','.')) || 0);
+      const numeros=valores.filter(v=>v>0);
+      const priNum=numeros[0]||0;
+      if((linha.includes('post') || linha.includes('publicac'))&&!linha.includes('melhor')&&priNum>0&&!document.getElementById('rm-posts').value) document.getElementById('rm-posts').value=priNum;
+      if((linha.includes('engaj') || linha.includes('engagement'))&&priNum>0&&!document.getElementById('rm-eng').value) document.getElementById('rm-eng').value=priNum;
+      if((linha.includes('alcance') || linha.includes('reach'))&&priNum>0&&!document.getElementById('rm-alcance').value) document.getElementById('rm-alcance').value=priNum;
+      if((linha.includes('salv') || linha.includes('save'))&&priNum>0&&!document.getElementById('rm-salv').value) document.getElementById('rm-salv').value=priNum;
+      if((linha.includes('compart') || linha.includes('share'))&&priNum>0&&!document.getElementById('rm-comp').value) document.getElementById('rm-comp').value=priNum;
+      if((linha.includes('view') || linha.includes('visualiz') || linha.includes('impres'))&&priNum>0&&!document.getElementById('rm-views').value) document.getElementById('rm-views').value=priNum;
+      if((linha.includes('curtid') || linha.includes('like'))&&priNum>0&&!document.getElementById('rm-curtidas').value) document.getElementById('rm-curtidas').value=priNum;
+      if((linha.includes('coment') || linha.includes('comment'))&&priNum>0&&!document.getElementById('rm-coment').value) document.getElementById('rm-coment').value=priNum;
+      if((linha.includes('direct') || linha.includes('dm') || linha.includes('mensag'))&&priNum>0&&!document.getElementById('rm-direct').value) document.getElementById('rm-direct').value=priNum;
+      if((linha.includes('seguid') || linha.includes('follower') || linha.includes('novo'))&&priNum>0&&!document.getElementById('rm-seg').value) document.getElementById('rm-seg').value=priNum;
+    });
+
+    // Coloca preview nos obs
+    document.getElementById('rm-obs').value=(document.getElementById('rm-obs').value?document.getElementById('rm-obs').value+'\n':'')+'[Arquivo: '+file.name+']\n'+texto.substring(0,300)+(texto.length>300?'...':'');
+
+    openModal('modalRelManual');
+    setTimeout(()=>{
+      const preenchidos=Object.entries({posts:'rm-posts',eng:'rm-eng',alcance:'rm-alcance',salv:'rm-salv',views:'rm-views'}).filter(([,id])=>document.getElementById(id)?.value>0).length;
+      if(preenchidos>0){
+        mostrarToast(`✅ ${file.name} lido! ${preenchidos} campo(s) preenchido(s) automaticamente. Confira e salve.`,'green');
+      }else{
+        mostrarToast(`📎 Arquivo "${file.name}" anexado. Preencha as métricas manualmente e salve.`,'blue');
+      }
+    },300);
+  }
+
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
+        tentarPreencher(rows.slice(0,30));
+      }catch(err){alert('Erro ao ler o arquivo Excel. Tente novamente.');}
+    };
+    reader.readAsArrayBuffer(file);
+  } else if(ext==='csv'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const rows=e.target.result.split('\n').slice(0,30).map(l=>l.split(/[,;]/));
+      tentarPreencher(rows);
+    };
+    reader.readAsText(file, 'UTF-8');
+  } else {
+    alert('Formato não suportado. Use .xlsx, .xls ou .csv');
+  }
+  input.value='';
+}
+
+function mostrarToast(msg, cor){
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .3s;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.15)';document.body.appendChild(t);}
+  const bg={green:'var(--green)',blue:'var(--accent)',red:'var(--red)'}[cor]||'var(--accent)';
+  t.style.background=bg;t.style.color='white';t.style.opacity='1';t.textContent=msg;
+  setTimeout(()=>{t.style.opacity='0';},3500);
+}
+
+function exportarHistoricoParaClaude(){
+  loadRelManuais();
+  if(!relManuais.length){alert('Nenhum relatório manual cadastrado.');return;}
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const sorted=[...relManuais].sort((a,b)=>a.periodo.localeCompare(b.periodo));
+  const texto=`Olá! Seguem os dados históricos do Instagram do perfil **${p?.nome||currentPerfil}** para análise:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 HISTÓRICO COMPLETO (${relManuais.length} períodos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${sorted.map(r=>{
+  const label=r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo;
+  return`📅 ${label}${r.desc?' — '+r.desc:''}
+  Posts: ${r.posts||'—'} | Eng: ${r.eng?fmtP(r.eng):'—'} | Alcance médio: ${fmtN(r.alcance||0)}
+  Salvamentos: ${fmtN(r.salv||0)} | Compartilhamentos: ${fmtN(r.comp||0)} | Views: ${fmtN(r.views||0)}
+  Curtidas: ${fmtN(r.curtidas||0)} | DMs: ${fmtN(r.direct||0)} | Novos seg.: ${fmtN(r.seg||0)}
+  ${r.bestpost?'🏆 Melhor post: '+r.bestpost:''}
+  ${r.arquivo?'📎 Arquivo: '+r.arquivo:''}
+  ${r.obs?'📝 Obs: '+r.obs.substring(0,150):''}`;
+}).join('\n\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❓ O QUE PRECISO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Com base nesse histórico:
+1. Qual é a tendência geral da conta (crescimento, queda, estagnação)?
+2. Quais períodos performaram melhor e o que pode ter causado isso?
+3. Quais métricas estão evoluindo bem e quais precisam de atenção?
+4. Que ações concretas posso tomar para melhorar os próximos períodos?`;
+
+  const el=document.getElementById('claudeExportText');
+  if(el){el.value=texto;openModal('modalClaude');}
+  else{
+    // Fallback: copia direto
+    navigator.clipboard.writeText(texto).then(()=>mostrarToast('✅ Histórico copiado para a área de transferência!','green')).catch(()=>{alert(texto);});
+  }
+}
+// ══ CONCORRENTES ══
+function renderConcorrentes(){
+  const el=document.getElementById('concorrentesContent');if(!el)return;
+  if(!concorrentes.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔭</div><div class="empty-text">Nenhum concorrente cadastrado ainda.<br>Clique em "+ Adicionar concorrente" para começar a monitorar.</div></div>`;
+    return;
+  }
+
+  // Resumo geral
+  const alto=concorrentes.filter(c=>c.nivel==='alto').length;
+  const medio=concorrentes.filter(c=>c.nivel==='medio').length;
+  const baixo=concorrentes.filter(c=>c.nivel==='baixo').length;
+  const engMax=concorrentes.reduce((a,c)=>Math.max(a,parseFloat(c.eng||0)),0);
+  const segMax=concorrentes.reduce((a,c)=>Math.max(a,parseFloat(c.seg||0)),0);
+
+  el.innerHTML=`
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-label">Total Monitorados</div><div class="stat-value">${concorrentes.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Ameaça Alta</div><div class="stat-value" style="color:var(--red)">${alto}</div></div>
+      <div class="stat-card"><div class="stat-label">Maior Eng. Concorrente</div><div class="stat-value" style="color:var(--purple)">${fmtP(engMax)}</div></div>
+      <div class="stat-card"><div class="stat-label">Maior Base (seguidores)</div><div class="stat-value">${fmtN(segMax)}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${concorrentes.map((c,i)=>{
+        const nivelCls={alto:'badge-red',medio:'badge-yellow',baixo:'badge-green'}[c.nivel]||'badge-blue';
+        const nivelLabel={alto:'🔴 Ameaça Alta',medio:'🟡 Ameaça Média',baixo:'🟢 Referência'}[c.nivel]||c.nivel;
+        return`<div class="card">
+          <div style="padding:16px 18px">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;flex-shrink:0">${c.nome[0].toUpperCase()}</div>
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:15px;font-weight:800">${c.nome}</span>
+                  ${c.arroba?`<span style="font-size:12px;color:var(--accent)">${c.arroba}</span>`:''}
+                  <span class="badge ${nivelCls}">${nivelLabel}</span>
+                  ${c.nicho?`<span class="badge badge-blue">${c.nicho}</span>`:''}
+                  ${c.link?`<a href="${c.link}" target="_blank" style="font-size:11px;color:var(--accent);margin-left:auto">🔗 Ver perfil</a>`:''}
+                </div>
+                ${c.data?`<div style="font-size:10px;color:var(--muted);margin-top:3px">Analisado em: ${new Date(c.data).toLocaleDateString('pt-BR')}</div>`:''}
+              </div>
+            </div>
+
+            <!-- Métricas -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px">
+              ${[['👥','Seguidores',fmtN(c.seg||0)],['📅','Freq.',c.freq||'—'],['📱','Formato',c.formato||'—'],['💬','Eng. Est.',c.eng?fmtP(c.eng):'—'],['🗣','Tom',c.tom||'—']].map(([ic,l,v])=>`
+                <div style="text-align:center;background:var(--bg);border-radius:8px;padding:10px 6px">
+                  <div style="font-size:16px;margin-bottom:3px">${ic}</div>
+                  <div style="font-size:12px;font-weight:700">${v}</div>
+                  <div style="font-size:9px;color:var(--muted)">${l}</div>
+                </div>`).join('')}
+            </div>
+
+            <!-- Temas -->
+            ${c.temas?`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">📌 Temas mais postados</div><div style="font-size:12px;background:var(--bg);border-radius:7px;padding:8px 10px">${c.temas}</div></div>`:''}
+
+            <!-- Fortes / Fracos / Oportunidades -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              ${c.fortes?`<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:4px">✅ Pontos fortes</div><div style="font-size:11px;background:var(--green-bg);border-radius:7px;padding:8px 10px;color:var(--green)">${c.fortes}</div></div>`:''}
+              ${c.fracos?`<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:4px">❌ Pontos fracos</div><div style="font-size:11px;background:var(--red-bg);border-radius:7px;padding:8px 10px;color:var(--red)">${c.fracos}</div></div>`:''}
+              ${c.opor?`<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--purple);margin-bottom:4px">💡 Oportunidades</div><div style="font-size:11px;background:var(--purple-bg);border-radius:7px;padding:8px 10px;color:var(--purple)">${c.opor}</div></div>`:''}
+            </div>
+
+            ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);border-radius:7px;padding:8px 10px;margin-bottom:10px">${c.obs}</div>`:''}
+
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="editarConcorrente(${i})">✏️ Editar</button>
+              <button class="btn btn-ghost btn-sm" onclick="atualizarConcorrente(${i})">🔄 Atualizar métricas</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deletarConcorrente(${i})">🗑 Excluir</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div class="card-header"><span>📊</span><span class="card-title">Comparativo — Você vs Concorrentes</span></div>
+      <table><thead><tr><th>Perfil</th><th>Seguidores</th><th>Eng. %</th><th>Freq.</th><th>Formato</th><th>Nível</th></tr></thead><tbody>
+        <tr style="background:var(--al)">
+          <td style="font-weight:700">🏠 Você</td>
+          <td>—</td>
+          <td style="font-weight:700;color:${posts.length?(posts.reduce((a,p)=>a+calcEng(p),0)/posts.length)>=3?'var(--green)':'var(--red)':'var(--muted)'}">
+            ${posts.length?fmtP(posts.reduce((a,p)=>a+calcEng(p),0)/posts.length):'Sem dados'}
+          </td>
+          <td>—</td><td>—</td><td><span class="badge badge-blue">Sua conta</span></td>
+        </tr>
+        ${concorrentes.map(c=>{
+          const nivelCls={alto:'badge-red',medio:'badge-yellow',baixo:'badge-green'}[c.nivel]||'badge-blue';
+          return`<tr><td style="font-weight:600">${c.nome} <span style="font-size:11px;color:var(--muted)">${c.arroba||''}</span></td><td>${fmtN(c.seg||0)}</td><td style="font-weight:700">${c.eng?fmtP(c.eng):'—'}</td><td style="font-size:11px">${c.freq||'—'}</td><td>${c.formato||'—'}</td><td><span class="badge ${nivelCls}">${{alto:'Alta',medio:'Média',baixo:'Baixa'}[c.nivel]||c.nivel}</span></td></tr>`;
+        }).join('')}
+      </tbody></table>
+    </div>`;
+}
+
+async function salvarConcorrente(){
+  const nome=document.getElementById('conc-nome').value.trim();
+  if(!nome){alert('Informe o nome do concorrente.');return;}
+  const obj={
+    nome, arroba:document.getElementById('conc-arroba').value,
+    link:document.getElementById('conc-link').value,
+    nicho:document.getElementById('conc-nicho').value,
+    nivel:document.getElementById('conc-nivel').value,
+    seg:parseFloat(document.getElementById('conc-seg').value)||0,
+    seg2:parseFloat(document.getElementById('conc-seg2').value)||0,
+    posts:parseFloat(document.getElementById('conc-posts').value)||0,
+    freq:document.getElementById('conc-freq').value,
+    eng:parseFloat(document.getElementById('conc-eng').value)||0,
+    formato:document.getElementById('conc-formato').value,
+    temas:document.getElementById('conc-temas').value,
+    tom:document.getElementById('conc-tom').value,
+    fortes:document.getElementById('conc-fortes').value,
+    fracos:document.getElementById('conc-fracos').value,
+    opor:document.getElementById('conc-opor').value,
+    data:document.getElementById('conc-data').value||null,
+    obs:document.getElementById('conc-obs').value
+  };
+  setSyncStatus('loading');
+  if(currentConcId!==null){
+    const c=concorrentes[currentConcId];
+    if(c.id)await sbUpdate('ig_conc',c.id,obj);
+    concorrentes[currentConcId]={...c,...obj};
+  }else{
+    const novo=await sbInsert('ig_conc',obj);
+    concorrentes.push(novo||{...obj,id:Date.now().toString(),perfil:currentPerfil});
+  }
+  setSyncStatus('ok');
+  closeModal('modalConcorrente');currentConcId=null;
+  limparFormConc();renderConcorrentes();
+}
+
+function limparFormConc(){
+  ['conc-nome','conc-arroba','conc-link','conc-nicho','conc-seg','conc-seg2','conc-posts','conc-eng','conc-temas','conc-fortes','conc-fracos','conc-opor','conc-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function editarConcorrente(i){
+  const c=concorrentes[i];currentConcId=i;
+  document.getElementById('concModalTitle').textContent='Editar Concorrente';
+  document.getElementById('btnSalvConc').textContent='Atualizar';
+  document.getElementById('conc-nome').value=c.nome||'';
+  document.getElementById('conc-arroba').value=c.arroba||'';
+  document.getElementById('conc-link').value=c.link||'';
+  document.getElementById('conc-nicho').value=c.nicho||'';
+  document.getElementById('conc-nivel').value=c.nivel||'medio';
+  document.getElementById('conc-seg').value=c.seg||'';
+  document.getElementById('conc-seg2').value=c.seg2||'';
+  document.getElementById('conc-posts').value=c.posts||'';
+  document.getElementById('conc-freq').value=c.freq||'Diária';
+  document.getElementById('conc-eng').value=c.eng||'';
+  document.getElementById('conc-formato').value=c.formato||'Reels';
+  document.getElementById('conc-temas').value=c.temas||'';
+  document.getElementById('conc-tom').value=c.tom||'Misto';
+  document.getElementById('conc-fortes').value=c.fortes||'';
+  document.getElementById('conc-fracos').value=c.fracos||'';
+  document.getElementById('conc-opor').value=c.opor||'';
+  document.getElementById('conc-data').value=c.data||'';
+  document.getElementById('conc-obs').value=c.obs||'';
+  openModal('modalConcorrente');
+}
+
+async function atualizarConcorrente(i){
+  const c=concorrentes[i];
+  const seg=prompt(`Seguidores atuais de ${c.nome}:`,c.seg||0);
+  if(seg===null)return;
+  const eng=prompt(`Engajamento médio % de ${c.nome}:`,c.eng||0);
+  if(eng===null)return;
+  concorrentes[i].seg=parseFloat(seg)||0;
+  concorrentes[i].eng=parseFloat(eng)||0;
+  concorrentes[i].data=new Date().toISOString().split('T')[0];
+  if(c.id)await sbUpdate('ig_conc',c.id,{seg:concorrentes[i].seg,eng:concorrentes[i].eng,data:concorrentes[i].data});
+  renderConcorrentes();
+}
+
+async function deletarConcorrente(i){
+  if(!confirm('Excluir este concorrente?'))return;
+  const c=concorrentes[i];
+  if(c.id)await sbDelete('ig_conc',c.id);
+  concorrentes.splice(i,1);renderConcorrentes();
+}
+function exportarParaClaude(){
+  const engMedio = posts.length ? posts.reduce((a,p)=>a+calcEng(p),0)/posts.length : 0;
+  const alcMedio = posts.length ? posts.reduce((a,p)=>a+(parseFloat(p.alcance)||0),0)/posts.length : 0;
+  const totalSalv = posts.reduce((a,p)=>a+(parseFloat(p.salv)||0),0);
+  const totalComp = posts.reduce((a,p)=>a+(parseFloat(p.comp)||0),0);
+
+  // Por formato
+  const byFormato = {};
+  posts.forEach(p=>{
+    if(!byFormato[p.formato])byFormato[p.formato]={posts:0,eng:0,salv:0};
+    byFormato[p.formato].posts++;
+    byFormato[p.formato].eng+=calcEng(p);
+    byFormato[p.formato].salv+=parseFloat(p.salv||0);
+  });
+
+  // Por pilar
+  const byPilar = {};
+  posts.forEach(p=>{
+    if(!p.pilar)return;
+    if(!byPilar[p.pilar])byPilar[p.pilar]={posts:0,eng:0};
+    byPilar[p.pilar].posts++;
+    byPilar[p.pilar].eng+=calcEng(p);
+  });
+
+  // Top 3 e piores 3
+  const sorted = [...posts].sort((a,b)=>calcScore(b)-calcScore(a));
+  const top3 = sorted.slice(0,3);
+  const piores3 = sorted.slice(-3).reverse();
+
+  // Metas
+  const metasInfo = metas.map(m=>{
+    const pct = m.valor>0?((m.atual/m.valor)*100).toFixed(0):0;
+    return `- ${m.nome}: ${fmtN(m.atual)} de ${fmtN(m.valor)} (${pct}%) — prazo: ${m.prazo||'não definido'}`;
+  }).join('\n') || '- Nenhuma meta cadastrada';
+
+  // Últimos 5 posts
+  const ultimos5 = [...posts].sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,5);
+
+  const p=PERFIS.find(x=>x.id===currentPerfil);
+  const nomePerfil=p?p.nome:'Meu perfil';
+  const texto = `Olá! Preciso de ajuda para saber exatamente quais ações tomar para crescer no Instagram e atingir minhas metas do perfil **${nomePerfil}**. Seguem os dados:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 RESUMO GERAL DA CONTA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total de posts registrados: ${posts.length}
+Engajamento médio: ${fmtP(engMedio)}
+Alcance médio por post: ${fmtN(alcMedio)}
+Total de salvamentos: ${fmtN(totalSalv)}
+Total de compartilhamentos: ${fmtN(totalComp)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 MINHAS METAS ATUAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${metasInfo}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 PERFORMANCE POR FORMATO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${Object.entries(byFormato).map(([f,v])=>`- ${f}: ${v.posts} posts | Eng. médio: ${fmtP(v.eng/v.posts)} | Salvamentos: ${fmtN(v.salv)}`).join('\n') || '- Sem dados'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏛 PERFORMANCE POR PILAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${Object.entries(byPilar).map(([p,v])=>`- ${p}: ${v.posts} posts | Eng. médio: ${fmtP(v.eng/v.posts)}`).join('\n') || '- Sem dados'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏆 MEUS 3 MELHORES POSTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${top3.map((p,i)=>`${i+1}. "${p.tema}" (${p.formato})
+   Alcance: ${fmtN(p.alcance||0)} | Eng: ${fmtP(calcEng(p))} | Salv: ${p.salv||0} | Comp: ${p.comp||0}
+   Gancho: "${p.gancho||'não registrado'}"
+   Score: ${calcScore(p)}/100`).join('\n\n') || '- Sem dados'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MEUS 3 POSTS QUE MENOS PERFORMARAM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${piores3.map((p,i)=>`${i+1}. "${p.tema}" (${p.formato})
+   Alcance: ${fmtN(p.alcance||0)} | Eng: ${fmtP(calcEng(p))} | Salv: ${p.salv||0}
+   Gancho: "${p.gancho||'não registrado'}"
+   Score: ${calcScore(p)}/100`).join('\n\n') || '- Sem dados'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 ÚLTIMOS 5 POSTS PUBLICADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${ultimos5.map(p=>`- ${p.data||'?'} | ${p.formato} | "${p.tema}" | Eng: ${fmtP(calcEng(p))} | Salv: ${p.salv||0}`).join('\n') || '- Sem dados'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔭 CONCORRENTES MONITORADOS (${concorrentes.length})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${concorrentes.length?concorrentes.map(c=>`- ${c.nome} ${c.arroba||''} | Seguidores: ${fmtN(c.seg||0)} | Eng: ${c.eng?fmtP(c.eng):'—'} | Nível: ${c.nivel}
+  Fortes: ${c.fortes||'—'} | Fracos: ${c.fracos||'—'} | Oportunidades: ${c.opor||'—'}`).join('\n'):'- Nenhum concorrente cadastrado'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 HISTÓRICO MANUAL (${relManuais.length} períodos anteriores)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${relManuais.length?[...relManuais].sort((a,b)=>b.periodo.localeCompare(a.periodo)).slice(0,6).map(r=>`- ${r.periodo?new Date(r.periodo+'-15').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):r.periodo}: ${r.posts||0} posts | Eng: ${r.eng?fmtP(r.eng):'—'} | Alcance médio: ${fmtN(r.alcance||0)} | Salv: ${fmtN(r.salv||0)} | Seg: +${fmtN(r.seg||0)}${r.bestpost?' | Melhor: '+r.bestpost:''}`).join('\n'):'- Nenhum histórico manual cadastrado'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Com base nesses dados, me diga:
+1. O que está funcionando e devo fazer mais?
+2. O que não está funcionando e devo parar ou mudar?
+3. Quais ações concretas devo tomar esta semana para avançar nas minhas metas?
+4. Qual formato e pilar devo priorizar agora?
+5. O que posso fazer de diferente nos ganchos dos meus posts?
+6. O que posso aprender dos concorrentes (o que fazer que eles fazem bem e o que explorar que eles ignoram)?
+7. Comparando o histórico anterior com os dados atuais, estou evoluindo ou regredindo?`;
+
+  document.getElementById('claudeExportText').value = texto;
+  openModal('modalClaude');
+}
+
+function copiarParaClaude(){
+  const txt = document.getElementById('claudeExportText');
+  txt.select();
+  txt.setSelectionRange(0,99999);
+  try{
+    navigator.clipboard.writeText(txt.value).then(()=>{
+      const btn = document.getElementById('btnCopiar');
+      btn.textContent = '✅ Copiado!';
+      btn.style.background = 'var(--green)';
+      setTimeout(()=>{btn.textContent='📋 Copiar tudo';btn.style.background='';},2500);
+    });
+  }catch(e){
+    document.execCommand('copy');
+    const btn = document.getElementById('btnCopiar');
+    btn.textContent = '✅ Copiado!';
+    setTimeout(()=>{btn.textContent='📋 Copiar tudo';},2500);
+  }
+}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+
+// ══ INIT ══
+(async()=>{
+  // Carrega cache local imediatamente
+  posts       =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_posts')||'[]');
+  metas       =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_metas')||'[]');
+  calPosts    =JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_cal')||'[]');
+  concorrentes=JSON.parse(localStorage.getItem('ig_'+currentPerfil+'_conc')||'[]');
+
+  renderProfileBar();
+  const _p=PERFIS.find(x=>x.id===currentPerfil);
+  if(_p)document.getElementById('headerSub').innerHTML=`${_p.emoji} <strong>${_p.nome}</strong> · Posts · Métricas · Metas · Concorrentes`;
+  try{document.getElementById('an-data').value=new Date().toISOString().split('T')[0];}catch(e){}
+  renderDashboard();updateBadges();popularRelMes();
+
+  // Conecta ao Firebase em segundo plano
+  setSyncStatus('loading');
+  try{
+    const [p,m,c,conc]=await Promise.all([
+      sbGet('ig_posts'),sbGet('ig_metas'),sbGet('ig_cal'),sbGet('ig_conc')
+    ]);
+    posts=p; metas=m; calPosts=c; concorrentes=conc;
+    localStorage.setItem('ig_'+currentPerfil+'_posts',JSON.stringify(posts));
+    localStorage.setItem('ig_'+currentPerfil+'_metas',JSON.stringify(metas));
+    localStorage.setItem('ig_'+currentPerfil+'_cal',JSON.stringify(calPosts));
+    localStorage.setItem('ig_'+currentPerfil+'_conc',JSON.stringify(concorrentes));
+    setSyncStatus('ok');
+    renderDashboard();updateBadges();popularRelMes();
+  }catch(e){
+    console.error('Firebase connect error:',e);
+    setSyncStatus('err','usando dados locais');
+  }
+})();
+</script>
+</body>
+</html>
